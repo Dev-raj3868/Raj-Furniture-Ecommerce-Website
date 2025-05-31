@@ -1,137 +1,117 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, Heart, Bell } from 'lucide-react';
+import { Search, Heart, ShoppingCart, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { categories } from '@/data/products';
-import {
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 const Header = () => {
-  const [searchQuery, setSearchQuery] = useState('');
   const { getTotalItems } = useCart();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/category/search?q=${encodeURIComponent(searchQuery)}`);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logged out successfully');
+      navigate('/');
+    } catch (error) {
+      toast.error('Failed to logout');
     }
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md">
-      {/* Top bar */}
-      <div className="bg-blue-600 text-white py-2">
-        <div className="container mx-auto px-4 flex justify-between items-center text-sm">
-          <div className="flex items-center space-x-4">
-            <span>Free Delivery on orders above ₹2999</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span>Download App</span>
-            <span>|</span>
-            <span>Customer Care</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main header */}
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
+    <header className="bg-white shadow-lg sticky top-0 z-40 border-b">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xl">
+          <Link to="/" className="flex items-center space-x-2 group">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 rounded-lg font-bold text-xl transform group-hover:scale-105 transition-transform">
               Raj
             </div>
-            <span className="text-xl font-semibold text-gray-800">Furniture</span>
+            <span className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+              Furniture
+            </span>
           </Link>
 
-          {/* Search bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-8">
-            <div className="relative">
+          {/* Search Bar */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 type="text"
-                placeholder="Search for furniture, home decor and more..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500"
+                placeholder="Search furniture..."
+                className="pl-10 pr-4 py-2 w-full rounded-full border-2 border-gray-200 focus:border-blue-500 transition-colors"
               />
-              <Button 
-                type="submit"
-                size="sm" 
-                className="absolute right-1 top-1 bottom-1 px-4"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
             </div>
-          </form>
+          </div>
 
-          {/* Actions */}
+          {/* Navigation Icons */}
           <div className="flex items-center space-x-4">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <User className="h-5 w-5" />
-                    <span className="hidden md:block">{user.name}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Orders</DropdownMenuItem>
-                  <DropdownMenuItem>Wishlist</DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/login">
-                <Button variant="ghost" className="flex items-center space-x-2">
-                  <User className="h-5 w-5" />
-                  <span className="hidden md:block">Login</span>
+              <>
+                <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-full">
+                  <Heart className="w-5 h-5" />
                 </Button>
-              </Link>
+                
+                <Link to="/cart">
+                  <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-full">
+                    <ShoppingCart className="w-5 h-5" />
+                    {getTotalItems() > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                        {getTotalItems()}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.user_metadata?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                          {user.email?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="outline" size="sm" className="hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
             )}
-
-            <Button variant="ghost" size="sm">
-              <Heart className="h-5 w-5" />
-            </Button>
-
-            <Link to="/cart">
-              <Button variant="ghost" size="sm" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {getTotalItems() > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                    {getTotalItems()}
-                  </span>
-                )}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Categories navigation */}
-      <div className="border-t bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center space-x-8 py-2 overflow-x-auto">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                to={`/category/${category.id}`}
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap py-2"
-              >
-                <span className="text-lg">{category.icon}</span>
-                <span className="text-sm font-medium">{category.name}</span>
-              </Link>
-            ))}
           </div>
         </div>
       </div>
