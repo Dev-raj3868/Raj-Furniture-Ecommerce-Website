@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { getProductsByCategory, categories } from '@/data/products';
+import { Product } from '@/types/product';
 
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
@@ -18,7 +19,22 @@ const CategoryPage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const categoryData = categories.find(cat => cat.id === category);
-  const products = getProductsByCategory(category || '');
+  const rawProducts = getProductsByCategory(category || '');
+
+  // Transform legacy products to match our unified Product type
+  const products: Product[] = rawProducts.map(product => ({
+    ...product,
+    image_url: product.images?.[0] || '/placeholder.svg',
+    category_id: '',
+    featured: product.featured || false,
+    in_stock: product.inStock,
+    rating: product.rating || 4.5,
+    reviewCount: product.reviewCount || 0,
+    features: product.features || [],
+    category: product.category || '',
+    subCategory: product.subCategory || '',
+    inStock: product.inStock
+  }));
 
   const sortOptions = [
     { value: 'featured', label: 'Featured' },
@@ -208,7 +224,7 @@ const CategoryPage = () => {
                   <Card key={product.id} className="p-4">
                     <div className="flex space-x-4">
                       <img
-                        src={product.images[0]}
+                        src={product.image_url || (product.images && product.images[0]) || '/placeholder.svg'}
                         alt={product.name}
                         className="w-32 h-32 object-cover rounded-lg"
                       />

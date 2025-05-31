@@ -8,30 +8,59 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getProductById, getRelatedProducts } from '@/data/products';
+import { Product } from '@/types/product';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
-  const product = getProductById(id!);
+  const rawProduct = getProductById(id!);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
 
-  if (!product) {
+  if (!rawProduct) {
     return <div>Product not found</div>;
   }
 
-  const relatedProducts = getRelatedProducts(product.id, product.category);
+  // Transform legacy product to match our unified Product type
+  const product: Product = {
+    ...rawProduct,
+    image_url: rawProduct.images?.[0] || '/placeholder.svg',
+    category_id: '',
+    featured: rawProduct.featured || false,
+    in_stock: rawProduct.inStock,
+    rating: rawProduct.rating || 4.5,
+    reviewCount: rawProduct.reviewCount || 0,
+    features: rawProduct.features || [],
+    category: rawProduct.category || '',
+    subCategory: rawProduct.subCategory || '',
+    inStock: rawProduct.inStock
+  };
+
+  const rawRelatedProducts = getRelatedProducts(product.id, product.category);
+  const relatedProducts: Product[] = rawRelatedProducts.map(p => ({
+    ...p,
+    image_url: p.images?.[0] || '/placeholder.svg',
+    category_id: '',
+    featured: p.featured || false,
+    in_stock: p.inStock,
+    rating: p.rating || 4.5,
+    reviewCount: p.reviewCount || 0,
+    features: p.features || [],
+    category: p.category || '',
+    subCategory: p.subCategory || '',
+    inStock: p.inStock
+  }));
 
   const handleAddToCart = () => {
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg',
       selectedColor,
       selectedSize
     });
@@ -72,24 +101,26 @@ const ProductPage = () => {
           <div>
             <div className="mb-4">
               <img
-                src={product.images[selectedImage]}
+                src={product.images?.[selectedImage] || product.image_url || '/placeholder.svg'}
                 alt={product.name}
                 className="w-full h-96 object-cover rounded-lg"
               />
             </div>
-            <div className="flex space-x-2 overflow-x-auto">
-              {product.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                    selectedImage === index ? 'border-blue-500' : 'border-gray-200'
-                  }`}
-                >
-                  <img src={image} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {product.images && product.images.length > 1 && (
+              <div className="flex space-x-2 overflow-x-auto">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                      selectedImage === index ? 'border-blue-500' : 'border-gray-200'
+                    }`}
+                  >
+                    <img src={image} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Details */}
