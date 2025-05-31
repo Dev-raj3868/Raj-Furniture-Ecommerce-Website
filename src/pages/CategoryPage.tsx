@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
@@ -26,7 +25,7 @@ const CategoryPage = () => {
     ...product,
     image_url: product.images?.[0] || '/placeholder.svg',
     category_id: '',
-    featured: product.featured || false,
+    featured: product.featured !== undefined ? product.featured : false,
     in_stock: product.inStock,
     rating: product.rating || 4.5,
     reviewCount: product.reviewCount || 0,

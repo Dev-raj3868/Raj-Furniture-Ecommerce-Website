@@ -26,4 +26,7 @@ export interface Product {
   // Optional properties from legacy system
   originalPrice?: number;
   discount?: number;
+  // Additional properties for product variations
+  colors?: string[];
+  sizes?: string[];
 }

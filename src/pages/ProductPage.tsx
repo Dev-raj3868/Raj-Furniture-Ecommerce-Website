@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Star, Heart, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
@@ -30,14 +29,16 @@ const ProductPage = () => {
     ...rawProduct,
     image_url: rawProduct.images?.[0] || '/placeholder.svg',
     category_id: '',
-    featured: rawProduct.featured || false,
+    featured: rawProduct.featured !== undefined ? rawProduct.featured : false,
     in_stock: rawProduct.inStock,
     rating: rawProduct.rating || 4.5,
     reviewCount: rawProduct.reviewCount || 0,
     features: rawProduct.features || [],
     category: rawProduct.category || '',
     subCategory: rawProduct.subCategory || '',
-    inStock: rawProduct.inStock
+    inStock: rawProduct.inStock,
+    colors: rawProduct.colors,
+    sizes: rawProduct.sizes
   };
 
   const rawRelatedProducts = getRelatedProducts(product.id, product.category);
@@ -45,7 +46,7 @@ const ProductPage = () => {
     ...p,
     image_url: p.images?.[0] || '/placeholder.svg',
     category_id: '',
-    featured: p.featured || false,
+    featured: p.featured !== undefined ? p.featured : false,
     in_stock: p.inStock,
     rating: p.rating || 4.5,
     reviewCount: p.reviewCount || 0,
@@ -158,7 +159,7 @@ const ProductPage = () => {
             </div>
 
             {/* Color Selection */}
-            {product.colors && (
+            {product.colors && product.colors.length > 0 && (
               <div className="mb-6">
                 <h3 className="font-semibold mb-3">Color:</h3>
                 <div className="flex space-x-2">
@@ -180,7 +181,7 @@ const ProductPage = () => {
             )}
 
             {/* Size Selection */}
-            {product.sizes && (
+            {product.sizes && product.sizes.length > 0 && (
               <div className="mb-6">
                 <h3 className="font-semibold mb-3">Size:</h3>
                 <div className="flex space-x-2">
@@ -290,12 +291,12 @@ const ProductPage = () => {
                   <div>
                     <strong>Sub-category:</strong> {product.subCategory}
                   </div>
-                  {product.colors && (
+                  {product.colors && product.colors.length > 0 && (
                     <div>
                       <strong>Available Colors:</strong> {product.colors.join(', ')}
                     </div>
                   )}
-                  {product.sizes && (
+                  {product.sizes && product.sizes.length > 0 && (
                     <div>
                       <strong>Available Sizes:</strong> {product.sizes.join(', ')}
                     </div>
