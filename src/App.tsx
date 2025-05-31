@@ -13,6 +13,7 @@ import PaymentPage from "./pages/PaymentPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ContactPage from "./pages/ContactPage";
+import WishlistPage from "./pages/WishlistPage";
 import NotFound from "./pages/NotFound";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, MapPin, User, Phone, Mail } from 'lucide-react';
@@ -19,7 +18,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   
   const [shippingAddress, setShippingAddress] = useState({
-    fullName: user?.name || '',
+    fullName: user?.user_metadata?.full_name || '',
     email: user?.email || '',
     phone: '',
     address: '',

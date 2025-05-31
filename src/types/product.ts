@@ -1,0 +1,25 @@
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string;
+  description: string;
+  category_id: string;
+  featured: boolean;
+  in_stock: boolean;
+  material?: string;
+  dimensions?: string;
+  color?: string;
+  images?: string[];
+  created_at?: string;
+  categories?: {
+    name: string;
+  };
+  // Legacy properties for compatibility
+  reviewCount?: number;
+  features?: string[];
+  category?: string;
+  subCategory?: string;
+  inStock?: boolean;
+}

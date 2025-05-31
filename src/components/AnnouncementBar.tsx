@@ -8,8 +8,7 @@ const AnnouncementBar = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-4 py-2 text-center relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-pulse opacity-50"></div>
+    <div className="bg-blue-600 text-white px-4 py-2 text-center relative overflow-hidden">
       <div className="relative flex items-center justify-center gap-2 text-sm font-medium">
         <Gift className="w-4 h-4 animate-bounce" />
         <span className="animate-pulse">

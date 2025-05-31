@@ -36,7 +36,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 rounded-lg font-bold text-xl transform group-hover:scale-105 transition-transform">
+            <div className="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xl transform group-hover:scale-105 transition-transform">
               Raj
             </div>
             <span className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
@@ -60,15 +60,17 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-full">
-                  <Heart className="w-5 h-5" />
-                </Button>
+                <Link to="/wishlist">
+                  <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-full">
+                    <Heart className="w-5 h-5" />
+                  </Button>
+                </Link>
                 
                 <Link to="/cart">
                   <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-full">
                     <ShoppingCart className="w-5 h-5" />
                     {getTotalItems() > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                      <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {getTotalItems()}
                       </span>
                     )}
@@ -80,7 +82,7 @@ const Header = () => {
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.user_metadata?.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                        <AvatarFallback className="bg-blue-600 text-white">
                           {user.email?.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -106,7 +108,7 @@ const Header = () => {
                   </Button>
                 </Link>
                 <Link to="/signup">
-                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all">
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 transition-all">
                     Sign Up
                   </Button>
                 </Link>

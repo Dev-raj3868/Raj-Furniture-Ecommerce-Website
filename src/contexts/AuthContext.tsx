@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `https://rajfurniture016.com/`;
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = async () => {
     setIsLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `https://rajfurniture016.com/`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGitHub = async () => {
     setIsLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `https://rajfurniture016.com/`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
