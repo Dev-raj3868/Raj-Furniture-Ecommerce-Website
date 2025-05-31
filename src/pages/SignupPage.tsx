@@ -15,6 +15,7 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   const { signup, loginWithGoogle, loginWithGitHub, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -31,12 +32,15 @@ const SignupPage = () => {
       return;
     }
 
+    setLocalLoading(true);
     try {
       await signup(name, email, password);
-      toast.success('Account created successfully!');
-      navigate('/');
-    } catch (error) {
-      toast.error('Signup failed. Please try again.');
+      toast.success('Account created successfully! Please check your email to confirm your account.');
+    } catch (error: any) {
+      console.error('Signup failed:', error);
+      toast.error(error.message || 'Signup failed. Please try again.');
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -44,9 +48,9 @@ const SignupPage = () => {
     try {
       await loginWithGoogle();
       toast.success('Account created successfully!');
-      navigate('/');
-    } catch (error) {
-      toast.error('Google signup failed.');
+    } catch (error: any) {
+      console.error('Google signup failed:', error);
+      toast.error(error.message || 'Google signup failed.');
     }
   };
 
@@ -54,11 +58,13 @@ const SignupPage = () => {
     try {
       await loginWithGitHub();
       toast.success('Account created successfully!');
-      navigate('/');
-    } catch (error) {
-      toast.error('GitHub signup failed.');
+    } catch (error: any) {
+      console.error('GitHub signup failed:', error);
+      toast.error(error.message || 'GitHub signup failed.');
     }
   };
+
+  const isSubmitting = isLoading || localLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -90,6 +96,7 @@ const SignupPage = () => {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your full name"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -102,6 +109,7 @@ const SignupPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -114,6 +122,7 @@ const SignupPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -126,6 +135,7 @@ const SignupPage = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm your password"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -134,6 +144,7 @@ const SignupPage = () => {
                   id="terms"
                   checked={agreeToTerms}
                   onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                  disabled={isSubmitting}
                 />
                 <label
                   htmlFor="terms"
@@ -150,8 +161,8 @@ const SignupPage = () => {
                 </label>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
 
@@ -168,7 +179,7 @@ const SignupPage = () => {
               <Button
                 variant="outline"
                 onClick={handleGoogleSignup}
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -194,7 +205,7 @@ const SignupPage = () => {
               <Button
                 variant="outline"
                 onClick={handleGitHubSignup}
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path

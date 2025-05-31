@@ -11,17 +11,23 @@ import { toast } from 'sonner';
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [localLoading, setLocalLoading] = useState(false);
   const { login, loginWithGoogle, loginWithGitHub, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalLoading(true);
+    
     try {
       await login(email, password);
       toast.success('Login successful!');
-      navigate('/');
-    } catch (error) {
-      toast.error('Login failed. Please try again.');
+      // Navigation will be handled by window.location.href in AuthContext
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      toast.error(error.message || 'Login failed. Please check your credentials and try again.');
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -29,9 +35,9 @@ const LoginPage = () => {
     try {
       await loginWithGoogle();
       toast.success('Login successful!');
-      navigate('/');
-    } catch (error) {
-      toast.error('Google login failed.');
+    } catch (error: any) {
+      console.error('Google login failed:', error);
+      toast.error(error.message || 'Google login failed.');
     }
   };
 
@@ -39,11 +45,13 @@ const LoginPage = () => {
     try {
       await loginWithGitHub();
       toast.success('Login successful!');
-      navigate('/');
-    } catch (error) {
-      toast.error('GitHub login failed.');
+    } catch (error: any) {
+      console.error('GitHub login failed:', error);
+      toast.error(error.message || 'GitHub login failed.');
     }
   };
+
+  const isSubmitting = isLoading || localLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -75,6 +83,7 @@ const LoginPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -87,11 +96,12 @@ const LoginPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
 
@@ -108,7 +118,7 @@ const LoginPage = () => {
               <Button
                 variant="outline"
                 onClick={handleGoogleLogin}
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -134,7 +144,7 @@ const LoginPage = () => {
               <Button
                 variant="outline"
                 onClick={handleGitHubLogin}
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path
