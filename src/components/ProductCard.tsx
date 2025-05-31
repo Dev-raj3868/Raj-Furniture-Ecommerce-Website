@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Product } from '@/data/products';
+import { Product } from '@/types/product';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 
@@ -21,17 +21,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0]
+      image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg'
     });
     toast.success('Added to cart!');
   };
+
+  const productImage = product.image_url || (product.images && product.images[0]) || '/placeholder.svg';
 
   return (
     <Link to={`/product/${product.id}`}>
       <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden group">
         <div className="relative">
           <img
-            src={product.images[0]}
+            src={productImage}
             alt={product.name}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -87,11 +89,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </Button>
           </div>
           
-          {product.fastDelivery && (
-            <div className="mt-2 text-xs text-green-600 font-medium">
-              Fast Delivery Available
-            </div>
-          )}
+          <div className="mt-2 text-xs text-green-600 font-medium">
+            {product.inStock ? 'In Stock' : 'Out of Stock'}
+          </div>
         </div>
       </div>
     </Link>

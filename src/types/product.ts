@@ -16,10 +16,14 @@ export interface Product {
   categories?: {
     name: string;
   };
-  // Legacy properties for compatibility
-  reviewCount?: number;
-  features?: string[];
-  category?: string;
-  subCategory?: string;
-  inStock?: boolean;
+  // Required properties for ProductCard compatibility
+  rating: number;
+  reviewCount: number;
+  features: string[];
+  category: string;
+  subCategory: string;
+  inStock: boolean;
+  // Optional properties from legacy system
+  originalPrice?: number;
+  discount?: number;
 }

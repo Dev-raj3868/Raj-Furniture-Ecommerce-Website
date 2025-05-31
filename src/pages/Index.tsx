@@ -18,8 +18,9 @@ const Index = () => {
   // Transform Supabase product data to match ProductCard expectations
   const transformProduct = (product: any): Product => ({
     ...product,
-    reviewCount: 0,
-    features: [],
+    rating: product.rating || 4.5,
+    reviewCount: product.review_count || 0,
+    features: product.specifications?.features || [],
     category: product.categories?.name || '',
     subCategory: '',
     inStock: product.in_stock
