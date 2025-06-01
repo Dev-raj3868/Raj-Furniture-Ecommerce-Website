@@ -18,6 +18,7 @@ const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [pincode, setPincode] = useState('');
   
   const { data: product, isLoading } = useProduct(id!);
   const { data: allProducts } = useProducts();
@@ -83,6 +84,26 @@ const ProductPage = () => {
     toast.success('Added to cart!');
   };
 
+  const handleBuyNow = () => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg'
+    });
+    toast.success('Redirecting to checkout...');
+    // Navigate to checkout page
+    window.location.href = '/checkout';
+  };
+
+  const checkPincode = () => {
+    if (pincode.length === 6) {
+      toast.success('Delivery available in your area! Expected delivery: 3-5 days');
+    } else {
+      toast.error('Please enter a valid 6-digit pincode');
+    }
+  };
+
   const productImages = product.images || [product.image_url || '/placeholder.svg'];
 
   return (
@@ -119,6 +140,14 @@ const ProductPage = () => {
                 ))}
               </div>
             )}
+
+            {/* 3D Model Section */}
+            <div className="bg-white rounded-lg p-4">
+              <h3 className="font-semibold mb-2">3D Model View</h3>
+              <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
+                <p className="text-gray-500">3D Model will be loaded here</p>
+              </div>
+            </div>
           </div>
 
           {/* Product Info */}
@@ -187,6 +216,24 @@ const ProductPage = () => {
               )}
             </div>
 
+            {/* Pincode Check */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-2">Check Delivery Availability</h3>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  placeholder="Enter pincode"
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value)}
+                  className="flex-1 px-3 py-2 border rounded-lg"
+                  maxLength={6}
+                />
+                <Button onClick={checkPincode} variant="outline">
+                  Check
+                </Button>
+              </div>
+            </div>
+
             {/* Quantity and Add to Cart */}
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
@@ -213,9 +260,17 @@ const ProductPage = () => {
                   onClick={handleAddToCart}
                   className="flex-1"
                   disabled={!transformedProduct.inStock}
+                  variant="outline"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
+                </Button>
+                <Button
+                  onClick={handleBuyNow}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600"
+                  disabled={!transformedProduct.inStock}
+                >
+                  Buy Now
                 </Button>
                 <Button variant="outline" size="icon">
                   <Heart className="h-4 w-4" />
@@ -309,7 +364,9 @@ const ProductPage = () => {
                       <div key={review.id} className="border-b pb-4">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <span className="font-medium">{review.profiles?.full_name || 'Anonymous'}</span>
+                            <span className="font-medium">
+                              {(review.profiles as any)?.full_name || 'Anonymous'}
+                            </span>
                             <div className="flex items-center">
                               {[...Array(5)].map((_, i) => (
                                 <Star

@@ -30,6 +30,13 @@ const Index = () => {
 
   const featuredProducts = products?.filter(product => product.featured).slice(0, 8).map(transformProduct) || [];
 
+  const scrollToProducts = () => {
+    const productsSection = document.getElementById('featured-products');
+    if (productsSection) {
+      productsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <AnnouncementBar />
@@ -47,7 +54,11 @@ const Index = () => {
               Discover our curated collection of modern, stylish, and comfortable furniture pieces
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 transform hover:scale-105 transition-all duration-300 shadow-xl">
+              <Button 
+                size="lg" 
+                className="bg-white text-blue-600 hover:bg-gray-100 transform hover:scale-105 transition-all duration-300 shadow-xl"
+                onClick={scrollToProducts}
+              >
                 Shop Now
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
@@ -126,7 +137,7 @@ const Index = () => {
       </section>
 
       {/* Featured Products Section */}
-      <section className="py-16 bg-white">
+      <section id="featured-products" className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-blue-800">
