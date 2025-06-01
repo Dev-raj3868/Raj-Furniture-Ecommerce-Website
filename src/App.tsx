@@ -16,6 +16,7 @@ import ContactPage from "./pages/ContactPage";
 import WishlistPage from "./pages/WishlistPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import ProfilePage from "./pages/ProfilePage";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/track-order" element={<TrackOrderPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/admin/*" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
