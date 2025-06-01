@@ -5,6 +5,7 @@ import { ArrowRight, Star, Truck, Shield, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import ChatBot from '@/components/ChatBot';
@@ -23,7 +24,8 @@ const Index = () => {
     features: product.specifications?.features || [],
     category: product.categories?.name || '',
     subCategory: '',
-    inStock: product.in_stock
+    inStock: product.in_stock,
+    featured: product.featured || false
   });
 
   const featuredProducts = products?.filter(product => product.featured).slice(0, 8).map(transformProduct) || [];
@@ -185,6 +187,7 @@ const Index = () => {
       </section>
 
       <ChatBot />
+      <Footer />
     </div>
   );
 };

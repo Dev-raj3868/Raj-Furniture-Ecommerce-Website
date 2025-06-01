@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingCart, User, LogOut } from 'lucide-react';
+import { Search, Heart, ShoppingCart, User, LogOut, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
@@ -60,6 +60,12 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                <Link to="/track-order">
+                  <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-full">
+                    <Package className="w-5 h-5" />
+                  </Button>
+                </Link>
+
                 <Link to="/wishlist">
                   <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-full">
                     <Heart className="w-5 h-5" />

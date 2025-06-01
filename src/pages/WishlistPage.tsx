@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,8 +14,8 @@ const WishlistPage = () => {
   const { user } = useAuth();
   const { addToCart } = useCart();
 
-  // Mock wishlist data - in a real app, this would come from your database
-  const wishlistItems = [
+  // Mock wishlist data with state management
+  const [wishlistItems, setWishlistItems] = useState([
     {
       id: '1',
       name: 'Modern Sofa',
@@ -28,8 +29,22 @@ const WishlistPage = () => {
       price: 4999,
       image_url: 'https://images.unsplash.com/photo-1549497538-303791108f95?w=400&h=300&fit=crop',
       category: 'Chairs'
+    },
+    {
+      id: '3',
+      name: 'Coffee Table',
+      price: 8999,
+      image_url: 'https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=300&fit=crop',
+      category: 'Tables'
+    },
+    {
+      id: '4',
+      name: 'Bed Frame',
+      price: 18999,
+      image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=300&fit=crop',
+      category: 'Beds'
     }
-  ];
+  ]);
 
   const handleAddToCart = (item: any) => {
     addToCart({
@@ -42,7 +57,7 @@ const WishlistPage = () => {
   };
 
   const handleRemoveFromWishlist = (itemId: string) => {
-    // In a real app, this would remove from database
+    setWishlistItems(prev => prev.filter(item => item.id !== itemId));
     toast.success('Removed from wishlist!');
   };
 
@@ -60,6 +75,7 @@ const WishlistPage = () => {
             </Button>
           </Link>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -137,6 +153,8 @@ const WishlistPage = () => {
           </div>
         )}
       </div>
+      
+      <Footer />
     </div>
   );
 };
