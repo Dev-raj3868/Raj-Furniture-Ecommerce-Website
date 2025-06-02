@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 interface RazorpayPaymentProps {
   amount: number;
-  orderId: string;
+  orderId?: string;
   onSuccess: (paymentId: string) => void;
   onFailure: (error: any) => void;
   disabled?: boolean;
@@ -55,10 +55,11 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
       key: RAZORPAY_KEY_ID,
       amount: amount * 100, // Convert to paise
       currency: 'INR',
-      name: 'FurniStore',
+      name: 'Raj Furniture',
       description: 'Furniture Purchase',
-      order_id: orderId,
+      order_id: orderId || `order_${Date.now()}`,
       handler: function (response: any) {
+        console.log('Payment successful:', response);
         onSuccess(response.razorpay_payment_id);
         toast.success('Payment successful!');
       },
@@ -68,14 +69,14 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
         contact: '9999999999'
       },
       notes: {
-        address: 'FurniStore Corporate Office'
+        address: 'Raj Furniture Store'
       },
       theme: {
         color: '#2563eb'
       },
       modal: {
         ondismiss: function() {
-          toast.error('Payment cancelled');
+          toast.info('Payment cancelled by user');
         }
       }
     };
@@ -83,6 +84,7 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
     try {
       const paymentObject = new window.Razorpay(options);
       paymentObject.on('payment.failed', function (response: any) {
+        console.error('Payment failed:', response.error);
         onFailure(response.error);
         toast.error(`Payment failed: ${response.error.description}`);
       });

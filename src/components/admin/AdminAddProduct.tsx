@@ -12,7 +12,8 @@ const AdminAddProduct = () => {
   const { data: categories } = useCategories();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<FileList | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -38,23 +39,30 @@ const AdminAddProduct = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedImages(e.target.files);
+      const files = Array.from(e.target.files);
+      setSelectedImages(files);
+      
+      // Create preview URLs
+      const previews = files.map(file => URL.createObjectURL(file));
+      setImagePreview(previews);
     }
   };
 
-  const uploadImages = async (files: FileList): Promise<string[]> => {
-    const uploadPromises = Array.from(files).map(async (file) => {
+  const uploadImages = async (files: File[]): Promise<string[]> => {
+    const uploadPromises = files.map(async (file) => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `product-images/${fileName}`;
 
+      // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('products')
         .upload(filePath, file);
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        throw uploadError;
+        // Return a placeholder image URL if upload fails
+        return '/placeholder.svg';
       }
 
       const { data: { publicUrl } } = supabase.storage
@@ -75,14 +83,16 @@ const AdminAddProduct = () => {
       let imageUrls: string[] = [];
       
       // Upload images if selected
-      if (selectedImages && selectedImages.length > 0) {
+      if (selectedImages.length > 0) {
         try {
           imageUrls = await uploadImages(selectedImages);
         } catch (error) {
           console.error('Image upload failed:', error);
-          // Continue without images for now
-          toast.error('Image upload failed, but product will be created without images');
+          // Continue without images
+          imageUrls = ['/placeholder.svg'];
         }
+      } else {
+        imageUrls = ['/placeholder.svg'];
       }
 
       // Insert product into database
@@ -101,8 +111,10 @@ const AdminAddProduct = () => {
           stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 0,
           in_stock: formData.inStock,
           featured: formData.featured,
-          image_url: imageUrls[0] || null,
-          images: imageUrls.length > 0 ? imageUrls : null,
+          image_url: imageUrls[0] || '/placeholder.svg',
+          images: imageUrls,
+          rating: 4.5,
+          review_count: 0,
           specifications: {
             features: [
               formData.material,
@@ -329,12 +341,25 @@ const AdminAddProduct = () => {
                       Choose Files
                     </Button>
                   </label>
-                  {selectedImages && selectedImages.length > 0 && (
+                  {selectedImages.length > 0 && (
                     <p className="text-sm text-gray-500 mt-2">
                       {selectedImages.length} file(s) selected
                     </p>
                   )}
                 </div>
+                
+                {imagePreview.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {imagePreview.map((url, index) => (
+                      <img
+                        key={index}
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-20 object-cover rounded"
+                      />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

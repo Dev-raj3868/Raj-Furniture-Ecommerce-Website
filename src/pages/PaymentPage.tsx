@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import RazorpayPayment from '@/components/RazorpayPayment';
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -24,17 +25,19 @@ const PaymentPage = () => {
     }
   }, [navigate]);
 
-  const handleRazorpayPayment = async () => {
-    setIsProcessing(true);
-    
-    // Simulate Razorpay payment process
-    setTimeout(() => {
-      setIsProcessing(false);
-      setPaymentSuccess(true);
-      clearCart();
-      localStorage.removeItem('orderData');
-      toast.success('Payment successful! Your order has been placed.');
-    }, 3000);
+  const handleRazorpaySuccess = (paymentId: string) => {
+    setIsProcessing(false);
+    setPaymentSuccess(true);
+    clearCart();
+    localStorage.removeItem('orderData');
+    localStorage.setItem('lastPaymentId', paymentId);
+    toast.success('Payment successful! Your order has been placed.');
+  };
+
+  const handleRazorpayFailure = (error: any) => {
+    setIsProcessing(false);
+    console.error('Payment failed:', error);
+    toast.error('Payment failed. Please try again.');
   };
 
   const handleCODOrder = () => {
@@ -62,7 +65,11 @@ const PaymentPage = () => {
             <Button onClick={() => navigate('/')} size="lg">
               Continue Shopping
             </Button>
-            <Button variant="outline" size="lg">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate('/track-order')}
+            >
               Track Order
             </Button>
           </div>
@@ -112,11 +119,11 @@ const PaymentPage = () => {
                         <p className="text-gray-600 mb-6">
                           You will be redirected to Razorpay's secure payment gateway
                         </p>
-                        <Button 
-                          onClick={handleRazorpayPayment}
+                        <RazorpayPayment
+                          amount={orderData.total}
+                          onSuccess={handleRazorpaySuccess}
+                          onFailure={handleRazorpayFailure}
                           disabled={isProcessing}
-                          size="lg"
-                          className="w-full max-w-xs"
                         >
                           {isProcessing ? (
                             <>
@@ -126,7 +133,7 @@ const PaymentPage = () => {
                           ) : (
                             `Pay ₹${orderData.total.toLocaleString()}`
                           )}
-                        </Button>
+                        </RazorpayPayment>
                       </div>
                     </div>
                     

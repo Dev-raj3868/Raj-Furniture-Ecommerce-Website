@@ -9,13 +9,15 @@ import { useAuth } from '@/contexts/AuthContext';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { items } = useCart();
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 
   const handleSignOut = async () => {
-    await signOut();
+    if (logout) {
+      await logout();
+    }
     navigate('/');
   };
 
@@ -26,9 +28,9 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">F</span>
+              <span className="text-white font-bold">R</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">FurniStore</span>
+            <span className="text-xl font-bold text-gray-900">Raj Furniture</span>
           </Link>
 
           {/* Desktop Navigation */}

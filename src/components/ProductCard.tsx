@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Star, Heart, ShoppingCart, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,9 +14,11 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     addToCart({
       id: product.id,
       name: product.name,
@@ -28,14 +30,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg'
     });
-    // Redirect to checkout page
-    window.location.href = '/checkout';
+    navigate('/checkout');
   };
 
   const productImage = product.image_url || (product.images && product.images[0]) || '/placeholder.svg';
