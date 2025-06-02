@@ -1,19 +1,25 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Upload, X } from 'lucide-react';
 import { useCategories } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const AdminAddProduct = () => {
-  const { data: categories } = useCategories();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [imagePreview, setImagePreview] = useState<string[]>([]);
+  const { data: categories } = useCategories();
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -25,112 +31,92 @@ const AdminAddProduct = () => {
     color: '',
     weight: '',
     stockQuantity: '',
-    featured: false,
     inStock: true,
+    featured: false,
+    features: ''
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
-  };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setSelectedImages(files);
-      
-      // Create preview URLs
-      const previews = files.map(file => URL.createObjectURL(file));
-      setImagePreview(previews);
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const uploadImages = async (files: File[]): Promise<string[]> => {
-    const uploadPromises = files.map(async (file) => {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `product-images/${fileName}`;
-
-      // Upload to Supabase storage
-      const { error: uploadError } = await supabase.storage
-        .from('products')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        // Return a placeholder image URL if upload fails
-        return '/placeholder.svg';
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('products')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
-    });
-
-    return Promise.all(uploadPromises);
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsLoading(true);
 
     try {
-      let imageUrls: string[] = [];
-      
-      // Upload images if selected
-      if (selectedImages.length > 0) {
-        try {
-          imageUrls = await uploadImages(selectedImages);
-        } catch (error) {
-          console.error('Image upload failed:', error);
-          // Continue without images
-          imageUrls = ['/placeholder.svg'];
+      let imageUrl = '';
+
+      // Upload image if provided
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, imageFile);
+
+        if (uploadError) {
+          console.log('Image upload error, using placeholder');
+          imageUrl = '/placeholder.svg';
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('product-images')
+            .getPublicUrl(fileName);
+          imageUrl = publicUrl;
         }
       } else {
-        imageUrls = ['/placeholder.svg'];
+        imageUrl = '/placeholder.svg';
       }
 
-      // Insert product into database
+      // Parse features
+      const featuresArray = formData.features
+        .split(',')
+        .map(f => f.trim())
+        .filter(f => f.length > 0);
+
+      // Prepare product data
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        original_price: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
+        category_id: formData.categoryId,
+        material: formData.material || null,
+        dimensions: formData.dimensions || null,
+        color: formData.color || null,
+        weight: formData.weight || null,
+        stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 0,
+        in_stock: formData.inStock,
+        featured: formData.featured,
+        image_url: imageUrl,
+        images: [imageUrl],
+        rating: 4.5,
+        review_count: 0,
+        specifications: {
+          features: featuresArray
+        }
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .insert({
-          name: formData.name,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          original_price: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
-          category_id: formData.categoryId,
-          material: formData.material || null,
-          dimensions: formData.dimensions || null,
-          color: formData.color || null,
-          weight: formData.weight || null,
-          stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 0,
-          in_stock: formData.inStock,
-          featured: formData.featured,
-          image_url: imageUrls[0] || '/placeholder.svg',
-          images: imageUrls,
-          rating: 4.5,
-          review_count: 0,
-          specifications: {
-            features: [
-              formData.material,
-              formData.dimensions,
-              formData.color,
-              formData.weight
-            ].filter(Boolean)
-          }
-        })
-        .select()
-        .single();
+        .insert([productData])
+        .select();
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast.success('Product added successfully!');
       navigate('/admin/products');
@@ -138,279 +124,240 @@ const AdminAddProduct = () => {
       console.error('Error adding product:', error);
       toast.error('Failed to add product. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div>
-      <div className="flex items-center mb-6">
-        <Link to="/admin/products" className="mr-4">
-          <Button variant="outline" size="sm">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" onClick={() => navigate('/admin/products')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Products
           </Button>
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Product Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="name">Product Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price (₹) *
-                    </label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Original Price (₹)
-                    </label>
-                    <input
-                      type="number"
-                      name="originalPrice"
-                      value={formData.originalPrice}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    name="categoryId"
-                    value={formData.categoryId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="">Select a category</option>
-                    {categories?.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Material
-                    </label>
-                    <input
-                      type="text"
-                      name="material"
-                      value={formData.material}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Dimensions
-                    </label>
-                    <input
-                      type="text"
-                      name="dimensions"
-                      value={formData.dimensions}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 180cm x 90cm x 75cm"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Color
-                    </label>
-                    <input
-                      type="text"
-                      name="color"
-                      value={formData.color}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Weight
-                    </label>
-                    <input
-                      type="text"
-                      name="weight"
-                      value={formData.weight}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 25kg"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stock Quantity
-                  </label>
-                  <input
+                  <Label htmlFor="price">Price (₹) *</Label>
+                  <Input
+                    id="price"
                     type="number"
-                    name="stockQuantity"
-                    value={formData.stockQuantity}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.price}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                    required
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div>
+                  <Label htmlFor="originalPrice">Original Price (₹)</Label>
+                  <Input
+                    id="originalPrice"
+                    type="number"
+                    value={formData.originalPrice}
+                    onChange={(e) => setFormData(prev => ({ ...prev, originalPrice: e.target.value }))}
+                  />
+                </div>
+              </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Images</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-2">Upload product images</p>
+              <div>
+                <Label htmlFor="category">Category *</Label>
+                <Select 
+                  value={formData.categoryId} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Product Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="material">Material</Label>
+                <Input
+                  id="material"
+                  value={formData.material}
+                  onChange={(e) => setFormData(prev => ({ ...prev, material: e.target.value }))}
+                  placeholder="e.g., Solid Wood, Leather"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="dimensions">Dimensions</Label>
+                <Input
+                  id="dimensions"
+                  value={formData.dimensions}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dimensions: e.target.value }))}
+                  placeholder="e.g., 120cm x 60cm x 75cm"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="color">Color</Label>
+                <Input
+                  id="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+                  placeholder="e.g., Brown, White"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="weight">Weight</Label>
+                <Input
+                  id="weight"
+                  value={formData.weight}
+                  onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                  placeholder="e.g., 25kg"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="stockQuantity">Stock Quantity</Label>
+                <Input
+                  id="stockQuantity"
+                  type="number"
+                  value={formData.stockQuantity}
+                  onChange={(e) => setFormData(prev => ({ ...prev, stockQuantity: e.target.value }))}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Image Upload */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Image</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-center w-full">
+                <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  {imagePreview ? (
+                    <div className="relative w-full h-full">
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={removeImage}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Click to upload</span> product image
+                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 5MB)</p>
+                    </div>
+                  )}
                   <input
+                    id="image-upload"
                     type="file"
-                    multiple
+                    className="hidden"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload"
                   />
-                  <label htmlFor="image-upload">
-                    <Button type="button" variant="outline" size="sm" className="cursor-pointer">
-                      Choose Files
-                    </Button>
-                  </label>
-                  {selectedImages.length > 0 && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      {selectedImages.length} file(s) selected
-                    </p>
-                  )}
-                </div>
-                
-                {imagePreview.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    {imagePreview.map((url, index) => (
-                      <img
-                        key={index}
-                        src={url}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-20 object-cover rounded"
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="inStock"
-                    checked={formData.inStock}
-                    onChange={handleInputChange}
-                    className="rounded"
-                  />
-                  <label className="text-sm font-medium text-gray-700">
-                    In Stock
-                  </label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="featured"
-                    checked={formData.featured}
-                    onChange={handleInputChange}
-                    className="rounded"
-                  />
-                  <label className="text-sm font-medium text-gray-700">
-                    Featured Product
-                  </label>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-3">
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Adding Product...' : 'Add Product'}
-              </Button>
-              <Link to="/admin/products" className="block">
-                <Button variant="outline" className="w-full">
-                  Cancel
-                </Button>
-              </Link>
+                </label>
+              </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Features and Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Features & Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="features">Features (comma separated)</Label>
+              <Textarea
+                id="features"
+                value={formData.features}
+                onChange={(e) => setFormData(prev => ({ ...prev, features: e.target.value }))}
+                placeholder="e.g., Ergonomic Design, Premium Quality, Easy Assembly"
+                rows={2}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="inStock">In Stock</Label>
+              <Switch
+                id="inStock"
+                checked={formData.inStock}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, inStock: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="featured">Featured Product</Label>
+              <Switch
+                id="featured"
+                checked={formData.featured}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, featured: checked }))}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end space-x-4">
+          <Button type="button" variant="outline" onClick={() => navigate('/admin/products')}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Adding Product...' : 'Add Product'}
+          </Button>
         </div>
       </form>
     </div>

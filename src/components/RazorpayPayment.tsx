@@ -1,15 +1,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface RazorpayPaymentProps {
   amount: number;
-  orderId?: string;
   onSuccess: (paymentId: string) => void;
-  onFailure: (error: any) => void;
-  disabled?: boolean;
-  children: React.ReactNode;
+  onError: (error: any) => void;
 }
 
 declare global {
@@ -18,23 +15,11 @@ declare global {
   }
 }
 
-const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
-  amount,
-  orderId,
-  onSuccess,
-  onFailure,
-  disabled = false,
-  children
-}) => {
-  const RAZORPAY_KEY_ID = 'rzp_test_n48QUoGCP2Rw3j';
+const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({ amount, onSuccess, onError }) => {
+  const navigate = useNavigate();
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
-      }
-
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => resolve(true);
@@ -44,27 +29,32 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
   };
 
   const handlePayment = async () => {
-    const scriptLoaded = await loadRazorpayScript();
+    const res = await loadRazorpayScript();
 
-    if (!scriptLoaded) {
-      toast.error('Razorpay SDK failed to load. Please check your internet connection.');
+    if (!res) {
+      alert('Razorpay SDK failed to load. Are you online?');
       return;
     }
 
     const options = {
-      key: RAZORPAY_KEY_ID,
-      amount: amount * 100, // Convert to paise
+      key: 'rzp_test_n48QUoGCP2Rw3j', // Your Razorpay key
+      amount: amount * 100, // Amount in paise
       currency: 'INR',
       name: 'Raj Furniture',
-      description: 'Furniture Purchase',
-      order_id: orderId || `order_${Date.now()}`,
+      description: 'Purchase from Raj Furniture',
+      image: '/placeholder.svg',
       handler: function (response: any) {
         console.log('Payment successful:', response);
         onSuccess(response.razorpay_payment_id);
-        toast.success('Payment successful!');
+        navigate('/order-confirmation', { 
+          state: { 
+            paymentId: response.razorpay_payment_id,
+            orderId: `ORD${Date.now()}`
+          } 
+        });
       },
       prefill: {
-        name: 'Customer Name',
+        name: 'Customer',
         email: 'customer@example.com',
         contact: '9999999999'
       },
@@ -76,7 +66,7 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
       },
       modal: {
         ondismiss: function() {
-          toast.info('Payment cancelled by user');
+          console.log('Payment modal closed');
         }
       }
     };
@@ -85,24 +75,22 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
       const paymentObject = new window.Razorpay(options);
       paymentObject.on('payment.failed', function (response: any) {
         console.error('Payment failed:', response.error);
-        onFailure(response.error);
-        toast.error(`Payment failed: ${response.error.description}`);
+        onError(response.error);
       });
       paymentObject.open();
     } catch (error) {
-      console.error('Payment error:', error);
-      onFailure(error);
-      toast.error('Payment initialization failed');
+      console.error('Error initializing Razorpay:', error);
+      onError(error);
     }
   };
 
   return (
     <Button 
-      onClick={handlePayment} 
-      disabled={disabled}
-      className="w-full"
+      onClick={handlePayment}
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+      size="lg"
     >
-      {children}
+      Pay ₹{amount.toLocaleString()} with Razorpay
     </Button>
   );
 };

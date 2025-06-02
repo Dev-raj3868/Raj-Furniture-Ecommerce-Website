@@ -31,13 +31,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg'
-    });
-    navigate('/checkout');
+    navigate(`/product/${product.id}`);
   };
 
   const productImage = product.image_url || (product.images && product.images[0]) || '/placeholder.svg';

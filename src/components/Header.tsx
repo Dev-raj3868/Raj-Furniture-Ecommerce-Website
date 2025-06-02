@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, Settings } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import SearchBar from './SearchBar';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,16 +22,28 @@ const Header = () => {
     navigate('/');
   };
 
+  const handleAdminClick = () => {
+    const isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn') === 'true';
+    if (isAdminLoggedIn) {
+      navigate('/admin');
+    } else {
+      navigate('/admin/login');
+    }
+  };
+
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">R</span>
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">R</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">Raj Furniture</span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-gray-900">Raj Furniture</span>
+              <span className="text-xs text-gray-500 hidden sm:block">Premium Quality Furniture</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -48,25 +61,21 @@ const Header = () => {
 
           {/* Search Bar */}
           <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search furniture..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+            <SearchBar />
           </div>
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
             {/* Admin Button */}
-            <Link to="/admin">
-              <Button variant="outline" size="sm" className="hidden md:flex items-center space-x-1">
-                <Settings className="w-4 h-4" />
-                <span>Admin</span>
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleAdminClick}
+              className="hidden md:flex items-center space-x-1"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Admin</span>
+            </Button>
 
             {/* Cart */}
             <Link to="/cart" className="relative">
@@ -133,6 +142,11 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t bg-white">
             <div className="py-4 space-y-2">
+              {/* Mobile Search */}
+              <div className="px-4 pb-4">
+                <SearchBar />
+              </div>
+              
               <Link to="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                 Home
               </Link>
@@ -142,9 +156,12 @@ const Header = () => {
               <Link to="/contact" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                 Contact
               </Link>
-              <Link to="/admin" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+              <button 
+                onClick={handleAdminClick}
+                className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
                 Admin Panel
-              </Link>
+              </button>
               {!user && (
                 <>
                   <Link to="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
