@@ -1,78 +1,43 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CreditCard, Shield, CheckCircle, ArrowLeft } from 'lucide-react';
-import Header from '@/components/Header';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCart } from '@/contexts/CartContext';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, CreditCard, Shield, Lock } from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import RazorpayPayment from '@/components/RazorpayPayment';
 
 const PaymentPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { clearCart } = useCart();
-  const [orderData, setOrderData] = useState<any>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const { total, items, shippingAddress } = location.state || {};
 
-  useEffect(() => {
-    const storedOrderData = localStorage.getItem('orderData');
-    if (storedOrderData) {
-      setOrderData(JSON.parse(storedOrderData));
-    } else {
-      navigate('/cart');
-    }
-  }, [navigate]);
-
-  const handleRazorpaySuccess = (paymentId: string) => {
-    setIsProcessing(false);
-    setPaymentSuccess(true);
-    clearCart();
-    localStorage.removeItem('orderData');
-    localStorage.setItem('lastPaymentId', paymentId);
-    toast.success('Payment successful! Your order has been placed.');
+  const handlePaymentSuccess = (paymentId: string) => {
+    console.log('Payment successful with ID:', paymentId);
+    navigate('/order-confirmation', {
+      state: {
+        paymentId,
+        orderId: `ORD${Date.now()}`,
+        total,
+        items,
+        shippingAddress
+      }
+    });
   };
 
-  const handleRazorpayFailure = (error: any) => {
-    setIsProcessing(false);
+  const handlePaymentError = (error: any) => {
     console.error('Payment failed:', error);
-    toast.error('Payment failed. Please try again.');
+    alert('Payment failed. Please try again.');
   };
 
-  const handleCODOrder = () => {
-    setPaymentSuccess(true);
-    clearCart();
-    localStorage.removeItem('orderData');
-    toast.success('Order placed successfully! Pay on delivery.');
-  };
-
-  if (!orderData) {
-    return null;
-  }
-
-  if (paymentSuccess) {
+  if (!total || !items) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <CheckCircle className="h-24 w-24 text-green-600 mx-auto mb-6" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Order Placed Successfully!</h1>
-          <p className="text-gray-600 mb-8">
-            Thank you for your purchase. You will receive an email confirmation shortly.
-          </p>
-          <div className="space-x-4">
-            <Button onClick={() => navigate('/')} size="lg">
-              Continue Shopping
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => navigate('/track-order')}
-            >
-              Track Order
-            </Button>
-          </div>
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Payment Request</h1>
+          <Button onClick={() => navigate('/cart')}>Go to Cart</Button>
         </div>
       </div>
     );
@@ -82,146 +47,103 @@ const PaymentPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/checkout')}
-            className="mr-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Checkout
-          </Button>
-          <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
-        </div>
-        
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Payment Method */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CreditCard className="h-5 w-5 mr-2" />
-                  Complete Your Payment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {orderData.paymentMethod === 'razorpay' ? (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg">
-                      <div className="text-center">
-                        <img 
-                          src="https://razorpay.com/assets/razorpay-logo.svg" 
-                          alt="Razorpay" 
-                          className="h-12 mx-auto mb-4"
-                        />
-                        <h3 className="text-lg font-semibold mb-2">Secure Payment with Razorpay</h3>
-                        <p className="text-gray-600 mb-6">
-                          You will be redirected to Razorpay's secure payment gateway
-                        </p>
-                        <RazorpayPayment
-                          amount={orderData.total}
-                          onSuccess={handleRazorpaySuccess}
-                          onFailure={handleRazorpayFailure}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Processing...
-                            </>
-                          ) : (
-                            `Pay ₹${orderData.total.toLocaleString()}`
-                          )}
-                        </RazorpayPayment>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-                      <Shield className="h-4 w-4" />
-                      <span>256-bit SSL encrypted payment</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center p-8">
-                    <h3 className="text-lg font-semibold mb-2">Cash on Delivery</h3>
-                    <p className="text-gray-600 mb-6">
-                      Pay when your order is delivered to your doorstep
-                    </p>
-                    <Button onClick={handleCODOrder} size="lg">
-                      Confirm Order
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate(-1)}
+          className="mb-4 sm:mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
 
-          {/* Order Summary */}
-          <div>
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Payment</h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            {/* Order Summary */}
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Items */}
                 <div className="space-y-3">
-                  {orderData.items.map((item: any) => (
-                    <div key={`${item.id}-${item.selectedColor}-${item.selectedSize}`} className="flex justify-between text-sm">
-                      <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-gray-600">Qty: {item.quantity}</div>
+                  {items.map((item: any) => (
+                    <div key={item.id} className="flex justify-between items-center">
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-12 h-12 sm:w-16 sm:h-16 rounded object-cover"
+                        />
+                        <div>
+                          <p className="font-medium text-sm sm:text-base">{item.name}</p>
+                          <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
+                        </div>
                       </div>
-                      <div className="font-medium">
+                      <p className="font-medium text-sm sm:text-base">
                         ₹{(item.price * item.quantity).toLocaleString()}
-                      </div>
+                      </p>
                     </div>
                   ))}
                 </div>
                 
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>₹{orderData.subtotal.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span>Delivery Fee</span>
-                    <span>{orderData.deliveryFee === 0 ? 'FREE' : `₹${orderData.deliveryFee}`}</span>
-                  </div>
-                  
-                  {orderData.discount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount</span>
-                      <span>-₹{orderData.discount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>Total</span>
-                      <span>₹{orderData.total.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Shipping Address */}
                 <div className="border-t pt-4">
-                  <h3 className="font-semibold mb-2">Shipping Address</h3>
-                  <div className="text-sm text-gray-600">
-                    <div>{orderData.shippingAddress.fullName}</div>
-                    <div>{orderData.shippingAddress.address}</div>
-                    <div>
-                      {orderData.shippingAddress.city}, {orderData.shippingAddress.state} - {orderData.shippingAddress.pincode}
-                    </div>
-                    <div>{orderData.shippingAddress.phone}</div>
+                  <div className="flex justify-between text-lg sm:text-xl font-bold">
+                    <span>Total</span>
+                    <span>₹{total.toLocaleString()}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Payment Methods */}
+            <div className="space-y-4 sm:space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg sm:text-xl flex items-center">
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Payment Method
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <RazorpayPayment
+                    amount={total}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Security Features */}
+              <Card>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Shield className="w-6 h-6 text-green-600" />
+                    <h3 className="font-semibold text-sm sm:text-base">Secure Payment</h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className="flex items-center">
+                      <Lock className="w-4 h-4 mr-2 text-green-600" />
+                      SSL Encrypted
+                    </li>
+                    <li className="flex items-center">
+                      <Lock className="w-4 h-4 mr-2 text-green-600" />
+                      PCI DSS Compliant
+                    </li>
+                    <li className="flex items-center">
+                      <Lock className="w-4 h-4 mr-2 text-green-600" />
+                      256-bit Encryption
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

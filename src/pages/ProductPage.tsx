@@ -61,6 +61,23 @@ const ProductPage = () => {
     .slice(0, 4)
     .map(transformProduct) || [];
 
+  // Type guard for specifications
+  const getFeatures = (specifications: any): string[] => {
+    if (!specifications) return [];
+    if (typeof specifications === 'string') {
+      try {
+        const parsed = JSON.parse(specifications);
+        return parsed.features || [];
+      } catch {
+        return [];
+      }
+    }
+    if (typeof specifications === 'object' && specifications.features) {
+      return Array.isArray(specifications.features) ? specifications.features : [];
+    }
+    return [];
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -94,21 +111,23 @@ const ProductPage = () => {
     );
   }
 
+  const features = getFeatures(product.specifications);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         <Button 
           variant="ghost" 
           onClick={() => navigate(-1)}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
           {/* Product Images */}
           <div className="space-y-4">
             <div className="aspect-square rounded-lg overflow-hidden bg-white">
@@ -121,46 +140,46 @@ const ProductPage = () => {
           </div>
 
           {/* Product Details */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
               <Badge variant="secondary" className="mb-2">
                 {product.categories?.name}
               </Badge>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 {product.name}
               </h1>
               
               <div className="flex items-center mb-4">
                 <div className="flex items-center">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg text-gray-600 ml-2">
+                  <span className="text-base sm:text-lg text-gray-600 ml-2">
                     {product.rating} ({product.review_count} reviews)
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 mb-6">
-                <span className="text-3xl font-bold text-gray-900">
+              <div className="flex items-center space-x-4 mb-4 sm:mb-6">
+                <span className="text-2xl sm:text-3xl font-bold text-gray-900">
                   ₹{product.price.toLocaleString()}
                 </span>
                 {product.original_price && (
-                  <span className="text-xl text-gray-500 line-through">
+                  <span className="text-lg sm:text-xl text-gray-500 line-through">
                     ₹{product.original_price.toLocaleString()}
                   </span>
                 )}
               </div>
 
-              <p className="text-gray-700 text-lg leading-relaxed mb-6">
+              <p className="text-gray-700 text-base sm:text-lg leading-relaxed mb-4 sm:mb-6">
                 {product.description}
               </p>
             </div>
 
             {/* Product Features */}
-            {product.specifications?.features && (
+            {features.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-3">Features</h3>
                 <ul className="space-y-2">
-                  {product.specifications.features.map((feature: string, index: number) => (
+                  {features.map((feature: string, index: number) => (
                     <li key={index} className="flex items-center">
                       <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
                       {feature}
@@ -171,7 +190,7 @@ const ProductPage = () => {
             )}
 
             {/* Product Specifications */}
-            <div className="grid grid-cols-2 gap-4 py-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-t border-gray-200">
               {product.material && (
                 <div>
                   <span className="font-medium">Material:</span>
@@ -200,7 +219,7 @@ const ProductPage = () => {
 
             {/* Action Buttons */}
             <div className="space-y-4">
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                 <Button
                   onClick={handleAddToCart}
                   variant="outline"
@@ -238,31 +257,31 @@ const ProductPage = () => {
         </div>
 
         {/* Features Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           <Card>
-            <CardContent className="flex items-center p-6">
-              <Truck className="h-8 w-8 text-blue-600 mr-4" />
+            <CardContent className="flex items-center p-4 sm:p-6">
+              <Truck className="h-6 sm:h-8 w-6 sm:w-8 text-blue-600 mr-4" />
               <div>
-                <h4 className="font-semibold">Free Delivery</h4>
-                <p className="text-sm text-gray-600">On orders above ₹999</p>
+                <h4 className="font-semibold text-sm sm:text-base">Free Delivery</h4>
+                <p className="text-xs sm:text-sm text-gray-600">On orders above ₹999</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center p-6">
-              <Shield className="h-8 w-8 text-blue-600 mr-4" />
+            <CardContent className="flex items-center p-4 sm:p-6">
+              <Shield className="h-6 sm:h-8 w-6 sm:w-8 text-blue-600 mr-4" />
               <div>
-                <h4 className="font-semibold">Quality Guarantee</h4>
-                <p className="text-sm text-gray-600">1-year warranty</p>
+                <h4 className="font-semibold text-sm sm:text-base">Quality Guarantee</h4>
+                <p className="text-xs sm:text-sm text-gray-600">1-year warranty</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center p-6">
-              <Star className="h-8 w-8 text-blue-600 mr-4" />
+            <CardContent className="flex items-center p-4 sm:p-6">
+              <Star className="h-6 sm:h-8 w-6 sm:w-8 text-blue-600 mr-4" />
               <div>
-                <h4 className="font-semibold">Premium Quality</h4>
-                <p className="text-sm text-gray-600">Handcrafted furniture</p>
+                <h4 className="font-semibold text-sm sm:text-base">Premium Quality</h4>
+                <p className="text-xs sm:text-sm text-gray-600">Handcrafted furniture</p>
               </div>
             </CardContent>
           </Card>
@@ -271,8 +290,8 @@ const ProductPage = () => {
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Related Products</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {relatedProducts.map((relatedProduct) => (
                 <ProductCard key={relatedProduct.id} product={relatedProduct} />
               ))}

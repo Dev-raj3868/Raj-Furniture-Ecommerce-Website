@@ -51,35 +51,50 @@ const AdminAddProduct = () => {
   const removeImage = () => {
     setImageFile(null);
     setImagePreview('');
+    // Reset the file input
+    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name || !formData.price || !formData.categoryId) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      let imageUrl = '';
+      let imageUrl = '/placeholder.svg';
 
       // Upload image if provided
       if (imageFile) {
+        console.log('Uploading image...');
         const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        const fileName = `product_${Date.now()}.${fileExt}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('product-images')
-          .upload(fileName, imageFile);
+          .upload(fileName, imageFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (uploadError) {
-          console.log('Image upload error, using placeholder');
-          imageUrl = '/placeholder.svg';
+          console.error('Image upload error:', uploadError);
+          toast.error('Failed to upload image, using placeholder');
         } else {
+          console.log('Image uploaded successfully:', uploadData);
           const { data: { publicUrl } } = supabase.storage
             .from('product-images')
             .getPublicUrl(fileName);
           imageUrl = publicUrl;
+          console.log('Image URL:', imageUrl);
         }
-      } else {
-        imageUrl = '/placeholder.svg';
       }
 
       // Parse features
@@ -91,7 +106,7 @@ const AdminAddProduct = () => {
       // Prepare product data
       const productData = {
         name: formData.name,
-        description: formData.description,
+        description: formData.description || null,
         price: parseFloat(formData.price),
         original_price: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
         category_id: formData.categoryId,
@@ -111,13 +126,19 @@ const AdminAddProduct = () => {
         }
       };
 
+      console.log('Adding product with data:', productData);
+
       const { data, error } = await supabase
         .from('products')
         .insert([productData])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
+      console.log('Product added successfully:', data);
       toast.success('Product added successfully!');
       navigate('/admin/products');
     } catch (error) {

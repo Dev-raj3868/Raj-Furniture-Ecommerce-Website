@@ -37,8 +37,8 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({ amount, onSuccess, on
     }
 
     const options = {
-      key: 'rzp_test_n48QUoGCP2Rw3j', // Your Razorpay key
-      amount: amount * 100, // Amount in paise
+      key: 'rzp_test_n48QUoGCP2Rw3j',
+      amount: amount * 100,
       currency: 'INR',
       name: 'Raj Furniture',
       description: 'Purchase from Raj Furniture',
