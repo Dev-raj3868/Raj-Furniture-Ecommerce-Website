@@ -3,12 +3,16 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Upload } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCategories } from '@/hooks/useSupabaseData';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const AdminAddProduct = () => {
   const { data: categories } = useCategories();
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<FileList | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -22,7 +26,6 @@ const AdminAddProduct = () => {
     stockQuantity: '',
     featured: false,
     inStock: true,
-    images: [] as string[]
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -33,11 +36,98 @@ const AdminAddProduct = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedImages(e.target.files);
+    }
+  };
+
+  const uploadImages = async (files: FileList): Promise<string[]> => {
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `product-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    });
+
+    return Promise.all(uploadPromises);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would submit to Supabase
-    console.log('Form data:', formData);
-    toast.success('Product added successfully!');
+    setIsSubmitting(true);
+
+    try {
+      let imageUrls: string[] = [];
+      
+      // Upload images if selected
+      if (selectedImages && selectedImages.length > 0) {
+        try {
+          imageUrls = await uploadImages(selectedImages);
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          // Continue without images for now
+          toast.error('Image upload failed, but product will be created without images');
+        }
+      }
+
+      // Insert product into database
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          name: formData.name,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          original_price: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
+          category_id: formData.categoryId,
+          material: formData.material || null,
+          dimensions: formData.dimensions || null,
+          color: formData.color || null,
+          weight: formData.weight || null,
+          stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 0,
+          in_stock: formData.inStock,
+          featured: formData.featured,
+          image_url: imageUrls[0] || null,
+          images: imageUrls.length > 0 ? imageUrls : null,
+          specifications: {
+            features: [
+              formData.material,
+              formData.dimensions,
+              formData.color,
+              formData.weight
+            ].filter(Boolean)
+          }
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      toast.success('Product added successfully!');
+      navigate('/admin/products');
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast.error('Failed to add product. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -226,9 +316,24 @@ const AdminAddProduct = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 mb-2">Upload product images</p>
-                  <Button variant="outline" size="sm">
-                    Choose Files
-                  </Button>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload">
+                    <Button type="button" variant="outline" size="sm" className="cursor-pointer">
+                      Choose Files
+                    </Button>
+                  </label>
+                  {selectedImages && selectedImages.length > 0 && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      {selectedImages.length} file(s) selected
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -267,8 +372,12 @@ const AdminAddProduct = () => {
             </Card>
 
             <div className="space-y-3">
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Add Product
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Adding Product...' : 'Add Product'}
               </Button>
               <Link to="/admin/products" className="block">
                 <Button variant="outline" className="w-full">

@@ -62,9 +62,11 @@ const Index = () => {
                 Shop Now
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 transform hover:scale-105 transition-all duration-300">
-                Explore Categories
-              </Button>
+              <Link to="/all-categories">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 transform hover:scale-105 transition-all duration-300">
+                  Explore Categories
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -163,10 +165,12 @@ const Index = () => {
           )}
           
           <div className="text-center mt-12">
-            <Button size="lg" variant="outline" className="hover:bg-blue-600 hover:text-white transition-all duration-300">
-              View All Products
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <Link to="/all-categories">
+              <Button size="lg" variant="outline" className="hover:bg-blue-600 hover:text-white transition-all duration-300">
+                View All Products
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

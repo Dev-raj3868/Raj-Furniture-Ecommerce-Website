@@ -5,18 +5,79 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useProducts } from '@/hooks/useSupabaseData';
+import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const AdminProducts = () => {
-  const { data: products, isLoading } = useProducts();
+  const { data: products, isLoading, refetch } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
   const filteredProducts = products?.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'all' || product.categories?.name === filterCategory;
     return matchesSearch && matchesCategory;
   }) || [];
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    setDeleteLoading(productId);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast.success('Product deleted successfully!');
+      refetch();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
+
+  const toggleFeatured = async (productId: string, currentFeatured: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ featured: !currentFeatured })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast.success(`Product ${!currentFeatured ? 'featured' : 'unfeatured'} successfully!`);
+      refetch();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast.error('Failed to update product');
+    }
+  };
+
+  const toggleStock = async (productId: string, currentStock: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ in_stock: !currentStock })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast.success(`Product marked as ${!currentStock ? 'in stock' : 'out of stock'}!`);
+      refetch();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast.error('Failed to update product');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -119,23 +180,46 @@ const AdminProducts = () => {
                     </td>
                     <td className="py-4 px-4">
                       <div className="space-y-1">
-                        <Badge 
-                          variant={product.in_stock ? "default" : "destructive"}
-                          className={product.in_stock ? "bg-green-100 text-green-800" : ""}
+                        <button
+                          onClick={() => toggleStock(product.id, product.in_stock)}
+                          className="block"
                         >
-                          {product.in_stock ? 'In Stock' : 'Out of Stock'}
-                        </Badge>
-                        {product.featured && (
-                          <Badge className="bg-yellow-100 text-yellow-800">Featured</Badge>
-                        )}
+                          <Badge 
+                            variant={product.in_stock ? "default" : "destructive"}
+                            className={`cursor-pointer ${product.in_stock ? "bg-green-100 text-green-800 hover:bg-green-200" : "hover:bg-red-200"}`}
+                          >
+                            {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                          </Badge>
+                        </button>
+                        <button
+                          onClick={() => toggleFeatured(product.id, product.featured)}
+                          className="block"
+                        >
+                          <Badge 
+                            className={`cursor-pointer ${
+                              product.featured 
+                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200" 
+                                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                            }`}
+                          >
+                            {product.featured ? 'Featured' : 'Not Featured'}
+                          </Badge>
+                        </button>
                       </div>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" title="Edit Product">
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDelete(product.id)}
+                          disabled={deleteLoading === product.id}
+                          title="Delete Product"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>

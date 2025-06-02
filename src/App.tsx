@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ProductPage from "./pages/ProductPage";
 import CategoryPage from "./pages/CategoryPage";
+import AllCategoriesPage from "./pages/AllCategoriesPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/category/:category" element={<CategoryPage />} />
+              <Route path="/all-categories" element={<AllCategoriesPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/payment" element={<PaymentPage />} />

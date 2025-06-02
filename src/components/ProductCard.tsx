@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Heart, ShoppingCart } from 'lucide-react';
+import { Star, Heart, ShoppingCart, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/types/product';
@@ -24,6 +24,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg'
     });
     toast.success('Added to cart!');
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg'
+    });
+    // Redirect to checkout page
+    window.location.href = '/checkout';
   };
 
   const productImage = product.image_url || (product.images && product.images[0]) || '/placeholder.svg';
@@ -78,15 +90,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           </div>
           
-          <div className="flex space-x-2">
-            <Button
-              onClick={handleAddToCart}
-              className="flex-1 text-sm"
-              size="sm"
-            >
-              <ShoppingCart className="h-4 w-4 mr-1" />
-              Add to Cart
-            </Button>
+          <div className="space-y-2">
+            <div className="flex space-x-2">
+              <Button
+                onClick={handleAddToCart}
+                variant="outline"
+                className="flex-1 text-sm"
+                size="sm"
+              >
+                <ShoppingCart className="h-4 w-4 mr-1" />
+                Add to Cart
+              </Button>
+              <Button
+                onClick={handleBuyNow}
+                className="flex-1 text-sm bg-orange-500 hover:bg-orange-600"
+                size="sm"
+              >
+                <Zap className="h-4 w-4 mr-1" />
+                Buy Now
+              </Button>
+            </div>
           </div>
           
           <div className="mt-2 text-xs text-green-600 font-medium">
