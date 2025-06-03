@@ -6,30 +6,36 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock, User } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const AdminLoginPage = () => {
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: ''
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simple admin credentials check (in a real app, this should be handled by your auth system)
-    if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      localStorage.setItem('isAdminLoggedIn', 'true');
-      toast.success('Login successful!');
-      navigate('/admin');
-    } else {
-      toast.error('Invalid credentials. Use username: admin, password: admin123');
+    try {
+      // Check if it's admin credentials
+      if (email === 'admin@rajfurniture.com' && password === 'admin123') {
+        await login(email, password);
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        toast.success('Admin login successful!');
+        navigate('/admin');
+      } else {
+        toast.error('Invalid admin credentials. Only admin can access this panel.');
+      }
+    } catch (error: any) {
+      console.error('Admin login error:', error);
+      toast.error('Invalid credentials or login failed.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -45,15 +51,15 @@ const AdminLoginPage = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Admin Email</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter username"
-                  value={credentials.username}
-                  onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+                  id="email"
+                  type="email"
+                  placeholder="Enter admin email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -68,8 +74,8 @@ const AdminLoginPage = () => {
                   id="password"
                   type="password"
                   placeholder="Enter password"
-                  value={credentials.password}
-                  onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -87,8 +93,8 @@ const AdminLoginPage = () => {
           
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Demo Credentials:</strong><br />
-              Username: admin<br />
+              <strong>Admin Credentials:</strong><br />
+              Email: admin@rajfurniture.com<br />
               Password: admin123
             </p>
           </div>

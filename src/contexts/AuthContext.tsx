@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, mobile?: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithGitHub: () => Promise<void>;
   logout: () => Promise<void>;
@@ -42,7 +41,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Handle successful sign in
         if (event === 'SIGNED_IN' && session) {
           toast.success('Login successful!');
-          // Don't force reload, just show success message
         }
 
         // Handle sign out
@@ -78,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, mobile?: string) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
@@ -87,11 +85,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         options: {
           data: {
             full_name: name,
+            phone: mobile,
           }
         }
       });
       if (error) throw error;
-      toast.success('Check your email to confirm your account!');
     } catch (error: any) {
       console.error('Signup error:', error);
       throw error;

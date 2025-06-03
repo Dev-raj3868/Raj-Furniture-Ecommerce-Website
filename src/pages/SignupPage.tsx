@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 const SignupPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -34,8 +35,10 @@ const SignupPage = () => {
 
     setLocalLoading(true);
     try {
-      await signup(name, email, password);
+      await signup(name, email, password, mobile);
       toast.success('Account created successfully! Please check your email to confirm your account.');
+      // Redirect to login page after successful signup
+      navigate('/login');
     } catch (error: any) {
       console.error('Signup failed:', error);
       toast.error(error.message || 'Signup failed. Please try again.');
@@ -108,6 +111,19 @@ const SignupPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="mobile">Mobile Number</Label>
+                <Input
+                  id="mobile"
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder="Enter your mobile number"
                   required
                   disabled={isSubmitting}
                 />

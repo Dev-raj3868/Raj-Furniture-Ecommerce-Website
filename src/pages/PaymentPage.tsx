@@ -31,14 +31,16 @@ const PaymentPage = () => {
     alert('Payment failed. Please try again.');
   };
 
-  if (!total || !items) {
+  if (!total || !items || !Array.isArray(items) || items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="container mx-auto px-4 py-8 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Payment Request</h1>
+          <p className="text-gray-600 mb-4">No items found for payment. Please add items to your cart first.</p>
           <Button onClick={() => navigate('/cart')}>Go to Cart</Button>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -50,11 +52,11 @@ const PaymentPage = () => {
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <Button 
           variant="ghost" 
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/checkout')}
           className="mb-4 sm:mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
+          Back to Checkout
         </Button>
 
         <div className="max-w-4xl mx-auto">
@@ -72,7 +74,7 @@ const PaymentPage = () => {
                     <div key={item.id} className="flex justify-between items-center">
                       <div className="flex items-center space-x-3">
                         <img
-                          src={item.image}
+                          src={item.image || '/placeholder.svg'}
                           alt={item.name}
                           className="w-12 h-12 sm:w-16 sm:h-16 rounded object-cover"
                         />
