@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { useProducts } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const AdminProducts = () => {
@@ -14,6 +14,7 @@ const AdminProducts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const filteredProducts = products?.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -49,6 +50,10 @@ const AdminProducts = () => {
     } finally {
       setDeleteLoading(null);
     }
+  };
+
+  const handleEdit = (productId: string) => {
+    navigate(`/admin/products/edit/${productId}`);
   };
 
   const toggleFeatured = async (productId: string, currentFeatured: boolean) => {
@@ -138,10 +143,10 @@ const AdminProducts = () => {
               className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Categories</option>
-              <option value="Sofas">Sofas</option>
-              <option value="Chairs">Chairs</option>
-              <option value="Tables">Tables</option>
-              <option value="Storage">Storage</option>
+              <option value="Bedroom">Bedroom</option>
+              <option value="Office">Office</option>
+              <option value="Dining">Dining</option>
+              <option value="Living Room">Living Room</option>
             </select>
           </div>
         </CardContent>
@@ -227,7 +232,13 @@ const AdminProducts = () => {
                     </td>
                     <td className="py-4 px-2 sm:px-4">
                       <div className="flex space-x-1 sm:space-x-2">
-                        <Button size="sm" variant="outline" title="Edit Product" className="h-8 w-8 p-0">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          title="Edit Product" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleEdit(product.id)}
+                        >
                           <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                         <Button 

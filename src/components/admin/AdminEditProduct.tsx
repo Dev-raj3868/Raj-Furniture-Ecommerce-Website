@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,13 +8,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft } from 'lucide-react';
-import { useCategories } from '@/hooks/useSupabaseData';
+import { useCategories, useProduct } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const AdminAddProduct = () => {
+const AdminEditProduct = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: categories } = useCategories();
+  const { data: product, isLoading: productLoading } = useProduct(id!);
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -34,6 +36,36 @@ const AdminAddProduct = () => {
     features: ''
   });
 
+  useEffect(() => {
+    if (product) {
+      // Parse features from specifications
+      let featuresString = '';
+      if (product.specifications && typeof product.specifications === 'object') {
+        const specs = product.specifications as any;
+        if (specs.features && Array.isArray(specs.features)) {
+          featuresString = specs.features.join(', ');
+        }
+      }
+
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price?.toString() || '',
+        originalPrice: product.original_price?.toString() || '',
+        categoryId: product.category_id || '',
+        material: product.material || '',
+        dimensions: product.dimensions || '',
+        color: product.color || '',
+        weight: product.weight || '',
+        stockQuantity: product.stock_quantity?.toString() || '',
+        inStock: product.in_stock || false,
+        featured: product.featured || false,
+        imageUrl: product.image_url || '',
+        features: featuresString
+      });
+    }
+  }, [product]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -44,7 +76,7 @@ const AdminAddProduct = () => {
 
     setIsLoading(true);
     try {
-      console.log('Submitting product data:', formData);
+      console.log('Updating product data:', formData);
       
       // Parse features into JSON format
       let specifications = null;
@@ -72,16 +104,16 @@ const AdminAddProduct = () => {
         featured: formData.featured,
         image_url: formData.imageUrl || '/placeholder.svg',
         images: formData.imageUrl ? [formData.imageUrl] : ['/placeholder.svg'],
-        rating: 4.5,
-        review_count: 0,
-        specifications: specifications
+        specifications: specifications,
+        updated_at: new Date().toISOString()
       };
 
       console.log('Final product data:', productData);
 
       const { data, error } = await supabase
         .from('products')
-        .insert([productData])
+        .update(productData)
+        .eq('id', id)
         .select();
 
       if (error) {
@@ -89,12 +121,12 @@ const AdminAddProduct = () => {
         throw error;
       }
 
-      console.log('Product created successfully:', data);
-      toast.success('Product added successfully!');
+      console.log('Product updated successfully:', data);
+      toast.success('Product updated successfully!');
       navigate('/admin/products');
     } catch (error: any) {
-      console.error('Error adding product:', error);
-      toast.error(`Failed to add product: ${error.message}`);
+      console.error('Error updating product:', error);
+      toast.error(`Failed to update product: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +139,23 @@ const AdminAddProduct = () => {
     }));
   };
 
+  if (productLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Product not found</h2>
+        <Button onClick={() => navigate('/admin/products')}>Back to Products</Button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex items-center mb-6">
@@ -118,7 +167,7 @@ const AdminAddProduct = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Products
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
       </div>
 
       <Card>
@@ -286,7 +335,7 @@ const AdminAddProduct = () => {
 
             <div className="flex space-x-4">
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Adding Product...' : 'Add Product'}
+                {isLoading ? 'Updating Product...' : 'Update Product'}
               </Button>
               <Button 
                 type="button" 
@@ -303,4 +352,4 @@ const AdminAddProduct = () => {
   );
 };
 
-export default AdminAddProduct;
+export default AdminEditProduct;

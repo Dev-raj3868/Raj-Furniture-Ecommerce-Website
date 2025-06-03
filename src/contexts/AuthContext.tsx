@@ -23,6 +23,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -34,10 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Handle successful sign in
         if (event === 'SIGNED_IN' && session) {
           toast.success('Login successful!');
-          // Redirect to home page after successful login
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 500);
+          // Don't force reload, just show success message
         }
 
         // Handle sign out
@@ -47,13 +52,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -71,7 +69,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(error.message);
       }
 
-      // Don't redirect here, let the auth state change handle it
       console.log('Login successful:', data);
     } catch (error: any) {
       console.error('Login error:', error);
@@ -149,8 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setUser(null);
       
-      // Redirect to home page
-      window.location.href = '/';
+      toast.success('Logged out successfully!');
     } catch (error: any) {
       console.error('Logout error:', error);
       throw error;
