@@ -11,7 +11,17 @@ import RazorpayPayment from '@/components/RazorpayPayment';
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { total, items, shippingAddress } = location.state || {};
+  const { 
+    total, 
+    items, 
+    shippingAddress, 
+    paymentMethod,
+    subtotal,
+    deliveryFee,
+    discount 
+  } = location.state || {};
+
+  console.log('Payment page received data:', location.state);
 
   const handlePaymentSuccess = (paymentId: string) => {
     console.log('Payment successful with ID:', paymentId);
@@ -21,7 +31,11 @@ const PaymentPage = () => {
         orderId: `ORD${Date.now()}`,
         total,
         items,
-        shippingAddress
+        shippingAddress,
+        paymentMethod,
+        subtotal,
+        deliveryFee,
+        discount
       }
     });
   };
@@ -31,14 +45,25 @@ const PaymentPage = () => {
     alert('Payment failed. Please try again.');
   };
 
+  // Better validation with detailed logging
   if (!total || !items || !Array.isArray(items) || items.length === 0) {
+    console.error('Payment page validation failed:', {
+      total,
+      items,
+      itemsArray: Array.isArray(items),
+      itemsLength: items?.length
+    });
+
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="container mx-auto px-4 py-8 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Payment Request</h1>
           <p className="text-gray-600 mb-4">No items found for payment. Please add items to your cart first.</p>
-          <Button onClick={() => navigate('/cart')}>Go to Cart</Button>
+          <div className="space-y-2">
+            <Button onClick={() => navigate('/cart')}>Go to Cart</Button>
+            <Button variant="outline" onClick={() => navigate('/checkout')}>Back to Checkout</Button>
+          </div>
         </div>
         <Footer />
       </div>
@@ -71,7 +96,7 @@ const PaymentPage = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   {items.map((item: any) => (
-                    <div key={item.id} className="flex justify-between items-center">
+                    <div key={`${item.id}-${item.selectedColor || 'default'}-${item.selectedSize || 'default'}`} className="flex justify-between items-center">
                       <div className="flex items-center space-x-3">
                         <img
                           src={item.image || '/placeholder.svg'}
@@ -81,6 +106,12 @@ const PaymentPage = () => {
                         <div>
                           <p className="font-medium text-sm sm:text-base">{item.name}</p>
                           <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
+                          {item.selectedColor && (
+                            <p className="text-gray-500 text-xs">Color: {item.selectedColor}</p>
+                          )}
+                          {item.selectedSize && (
+                            <p className="text-gray-500 text-xs">Size: {item.selectedSize}</p>
+                          )}
                         </div>
                       </div>
                       <p className="font-medium text-sm sm:text-base">
@@ -90,12 +121,48 @@ const PaymentPage = () => {
                   ))}
                 </div>
                 
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-lg sm:text-xl font-bold">
-                    <span>Total</span>
-                    <span>₹{total.toLocaleString()}</span>
+                <div className="border-t pt-4 space-y-2">
+                  {subtotal && (
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>₹{subtotal.toLocaleString()}</span>
+                    </div>
+                  )}
+                  
+                  {deliveryFee !== undefined && (
+                    <div className="flex justify-between">
+                      <span>Delivery Fee</span>
+                      <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
+                    </div>
+                  )}
+                  
+                  {discount && discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span>-₹{discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between text-lg sm:text-xl font-bold">
+                      <span>Total</span>
+                      <span>₹{total.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Shipping Address */}
+                {shippingAddress && (
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-2">Shipping Address</h3>
+                    <div className="text-sm text-gray-600">
+                      <p>{shippingAddress.fullName}</p>
+                      <p>{shippingAddress.address}</p>
+                      <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.pincode}</p>
+                      <p>{shippingAddress.phone}</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -109,11 +176,25 @@ const PaymentPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <RazorpayPayment
-                    amount={total}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                  />
+                  {paymentMethod === 'cod' ? (
+                    <div className="text-center py-4">
+                      <h3 className="text-lg font-semibold mb-2">Cash on Delivery</h3>
+                      <p className="text-gray-600 mb-4">Pay when your order is delivered</p>
+                      <Button 
+                        onClick={() => handlePaymentSuccess('COD_' + Date.now())}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                        size="lg"
+                      >
+                        Confirm Order - ₹{total.toLocaleString()}
+                      </Button>
+                    </div>
+                  ) : (
+                    <RazorpayPayment
+                      amount={total}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                    />
+                  )}
                 </CardContent>
               </Card>
 

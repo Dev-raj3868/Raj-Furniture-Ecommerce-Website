@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, MapPin, User, Phone, Mail } from 'lucide-react';
@@ -63,19 +64,35 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Store order details and navigate to payment
-    const orderData = {
-      items,
-      shippingAddress,
-      paymentMethod,
-      subtotal,
-      deliveryFee,
-      discount,
-      total
-    };
-    
-    localStorage.setItem('orderData', JSON.stringify(orderData));
-    navigate('/payment');
+    // Validate required fields
+    if (!shippingAddress.fullName || !shippingAddress.email || !shippingAddress.phone || 
+        !shippingAddress.address || !shippingAddress.city || !shippingAddress.state || !shippingAddress.pincode) {
+      toast.error('Please fill in all required fields.');
+      return;
+    }
+
+    console.log('Checkout data being passed:', {
+      items: items,
+      total: total,
+      shippingAddress: shippingAddress,
+      paymentMethod: paymentMethod,
+      subtotal: subtotal,
+      deliveryFee: deliveryFee,
+      discount: discount
+    });
+
+    // Navigate to payment page with proper state
+    navigate('/payment', {
+      state: {
+        items: items,
+        total: total,
+        shippingAddress: shippingAddress,
+        paymentMethod: paymentMethod,
+        subtotal: subtotal,
+        deliveryFee: deliveryFee,
+        discount: discount
+      }
+    });
   };
 
   if (items.length === 0) {
@@ -105,7 +122,7 @@ const CheckoutPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="fullName">Full Name</Label>
+                      <Label htmlFor="fullName">Full Name *</Label>
                       <Input
                         id="fullName"
                         value={shippingAddress.fullName}
@@ -114,7 +131,7 @@ const CheckoutPage = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">Email *</Label>
                       <Input
                         id="email"
                         type="email"
@@ -126,7 +143,7 @@ const CheckoutPage = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">Phone Number *</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -137,7 +154,7 @@ const CheckoutPage = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">Address *</Label>
                     <Input
                       id="address"
                       value={shippingAddress.address}
@@ -149,7 +166,7 @@ const CheckoutPage = () => {
                   
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="city">City</Label>
+                      <Label htmlFor="city">City *</Label>
                       <Input
                         id="city"
                         value={shippingAddress.city}
@@ -158,7 +175,7 @@ const CheckoutPage = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="state">State</Label>
+                      <Label htmlFor="state">State *</Label>
                       <Input
                         id="state"
                         value={shippingAddress.state}
@@ -167,7 +184,7 @@ const CheckoutPage = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="pincode">Pincode</Label>
+                      <Label htmlFor="pincode">Pincode *</Label>
                       <Input
                         id="pincode"
                         value={shippingAddress.pincode}
