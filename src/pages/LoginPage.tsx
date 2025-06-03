@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +11,15 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localLoading, setLocalLoading] = useState(false);
-  const { login, loginWithGoogle, loginWithGitHub, isLoading } = useAuth();
+  const { login, loginWithGoogle, loginWithGitHub, isLoading, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,8 +27,7 @@ const LoginPage = () => {
     
     try {
       await login(email, password);
-      toast.success('Login successful!');
-      // Navigation will be handled by window.location.href in AuthContext
+      // Don't show success toast here, let AuthContext handle it
     } catch (error: any) {
       console.error('Login failed:', error);
       toast.error(error.message || 'Login failed. Please check your credentials and try again.');
@@ -34,7 +39,7 @@ const LoginPage = () => {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      toast.success('Login successful!');
+      // OAuth will handle redirect
     } catch (error: any) {
       console.error('Google login failed:', error);
       toast.error(error.message || 'Google login failed.');
@@ -44,7 +49,7 @@ const LoginPage = () => {
   const handleGitHubLogin = async () => {
     try {
       await loginWithGitHub();
-      toast.success('Login successful!');
+      // OAuth will handle redirect
     } catch (error: any) {
       console.error('GitHub login failed:', error);
       toast.error(error.message || 'GitHub login failed.');
