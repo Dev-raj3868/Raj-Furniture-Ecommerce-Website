@@ -1,256 +1,171 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, Heart, Shield } from 'lucide-react';
+import { ShoppingCart, User, Heart, Menu, X, Search, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import SearchBar from './SearchBar';
-import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import SearchBar from '@/components/SearchBar';
 
 const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { items } = useCart();
   const { user, logout } = useAuth();
-  const { getTotalItems } = useCart();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
 
-  const totalItems = getTotalItems();
-  const isAdmin = user?.email === 'admin@rajfurniture.com';
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleLogout = async () => {
     try {
       await logout();
-      localStorage.removeItem('isAdminLoggedIn');
-      setShowUserMenu(false);
       navigate('/');
     } catch (error) {
-      toast.error('Failed to logout');
+      console.error('Logout error:', error);
     }
-  };
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const toggleUserMenu = () => {
-    setShowUserMenu(!showUserMenu);
   };
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
-      {/* Top bar - hidden on mobile */}
-      <div className="hidden md:block bg-gray-100 text-sm">
-        <div className="container mx-auto px-4 py-2 flex justify-between items-center">
-          <div className="flex space-x-4">
-            <span>Free shipping on orders over ₹2,999</span>
-            <span>•</span>
-            <span>Call us: +91 9876543210</span>
-          </div>
-          <div className="flex space-x-4">
-            {user && (
-              <span>Welcome, {user.user_metadata?.full_name || user.email}!</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Main header */}
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xl">
-              Raj
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">RF</span>
             </div>
-            <span className="text-xl font-semibold text-gray-800 hidden sm:block">Furniture</span>
+            <span className="text-xl font-bold text-gray-800">Raj Furniture</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-gray-700 hover:text-blue-600 transition-colors">
               Home
             </Link>
-            <Link to="/categories/bedroom" className="text-gray-700 hover:text-blue-600 transition-colors">
-              Bedroom
-            </Link>
-            <Link to="/categories/office" className="text-gray-700 hover:text-blue-600 transition-colors">
-              Office
-            </Link>
-            <Link to="/categories/dining" className="text-gray-700 hover:text-blue-600 transition-colors">
-              Dining
-            </Link>
-            <Link to="/categories/living-room" className="text-gray-700 hover:text-blue-600 transition-colors">
-              Living Room
-            </Link>
             <Link to="/all-categories" className="text-gray-700 hover:text-blue-600 transition-colors">
-              All Categories
+              Categories
+            </Link>
+            <Link to="/contact" className="text-gray-700 hover:text-blue-600 transition-colors">
+              Contact
             </Link>
           </nav>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden md:block flex-1 max-w-md mx-6">
+          <div className="hidden lg:block flex-1 max-w-md mx-8">
             <SearchBar />
           </div>
 
-          {/* Right side icons */}
+          {/* User Actions */}
           <div className="flex items-center space-x-4">
-            {/* Search icon - Mobile only */}
-            <button className="md:hidden text-gray-700 hover:text-blue-600">
-              <Search className="h-6 w-6" />
-            </button>
+            {/* Search Icon - Mobile */}
+            <Button variant="ghost" size="sm" className="lg:hidden">
+              <Search className="w-5 h-5" />
+            </Button>
 
-            {/* User menu */}
-            <div className="relative">
-              <button 
-                onClick={toggleUserMenu}
-                className="text-gray-700 hover:text-blue-600 transition-colors"
-              >
-                <User className="h-6 w-6" />
-              </button>
-
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
-                  {user ? (
-                    <>
-                      <Link 
-                        to="/profile" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        Profile
-                      </Link>
-                      <Link 
-                        to="/wishlist" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        Wishlist
-                      </Link>
-                      <Link 
-                        to="/track-order" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        Track Orders
-                      </Link>
-                      {/* Only show admin panel link for admin user */}
-                      {isAdmin && (
-                        <Link 
-                          to="/admin" 
-                          className="block px-4 py-2 text-sm text-red-700 hover:bg-red-50 border-t"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <Shield className="h-4 w-4 inline mr-2" />
-                          Admin Panel
-                        </Link>
-                      )}
-                      <button 
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t"
-                      >
-                        Logout
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link 
-                        to="/login" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        Login
-                      </Link>
-                      <Link 
-                        to="/signup" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        Sign Up
-                      </Link>
-                    </>
-                  )}
+            {user ? (
+              <>
+                <Link to="/wishlist">
+                  <Button variant="ghost" size="sm">
+                    <Heart className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link to="/cart">
+                  <Button variant="ghost" size="sm" className="relative">
+                    <ShoppingCart className="w-5 h-5" />
+                    {totalItems > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {totalItems}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+                <div className="relative group">
+                  <Button variant="ghost" size="sm">
+                    <User className="w-5 h-5" />
+                  </Button>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      to="/track-order"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Track Orders
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            {/* Wishlist */}
-            {user && (
-              <Link to="/wishlist" className="text-gray-700 hover:text-blue-600 transition-colors">
-                <Heart className="h-6 w-6" />
-              </Link>
+              </>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link to="/admin/login">
+                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                    <Settings className="w-4 h-4 mr-1" />
+                    Admin
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
 
-            {/* Shopping Cart */}
-            <Link to="/cart" className="relative text-gray-700 hover:text-blue-600 transition-colors">
-              <ShoppingCart className="h-6 w-6" />
-              {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {totalItems > 99 ? '99+' : totalItems}
-                </span>
-              )}
-            </Link>
-
-            {/* Mobile menu toggle */}
-            <button 
-              onClick={toggleMobileMenu}
-              className="lg:hidden text-gray-700 hover:text-blue-600"
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden border-t bg-white py-4">
-            <div className="mb-4">
-              <SearchBar />
-            </div>
-            <nav className="space-y-2">
-              <Link 
-                to="/" 
-                className="block py-2 text-gray-700 hover:text-blue-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t">
+            <div className="flex flex-col space-y-2">
+              <Link
+                to="/"
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
-              <Link 
-                to="/categories/bedroom" 
-                className="block py-2 text-gray-700 hover:text-blue-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+              <Link
+                to="/all-categories"
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                onClick={() => setIsMenuOpen(false)}
               >
-                Bedroom
+                Categories
               </Link>
-              <Link 
-                to="/categories/office" 
-                className="block py-2 text-gray-700 hover:text-blue-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+              <Link
+                to="/contact"
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                onClick={() => setIsMenuOpen(false)}
               >
-                Office
+                Contact
               </Link>
-              <Link 
-                to="/categories/dining" 
-                className="block py-2 text-gray-700 hover:text-blue-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Dining
-              </Link>
-              <Link 
-                to="/categories/living-room" 
-                className="block py-2 text-gray-700 hover:text-blue-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Living Room
-              </Link>
-              <Link 
-                to="/all-categories" 
-                className="block py-2 text-gray-700 hover:text-blue-600 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                All Categories
-              </Link>
-            </nav>
+              <div className="px-4 py-2">
+                <SearchBar />
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -1,141 +1,230 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useCategories } from '@/hooks/useSupabaseData';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+
+interface ProductForm {
+  name: string;
+  description: string;
+  price: string;
+  originalPrice: string;
+  categoryId: string;
+  imageUrl: string;
+  images: string[];
+  dimensions: string;
+  material: string;
+  color: string;
+  weight: string;
+  stockQuantity: string;
+  featured: boolean;
+  inStock: boolean;
+  specifications: {
+    features: string[];
+    warranty: string;
+    assembly: string;
+  };
+}
 
 const AdminAddProduct = () => {
-  const navigate = useNavigate();
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const queryClient = useQueryClient();
+  const { data: categories } = useCategories();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductForm>({
     name: '',
     description: '',
     price: '',
     originalPrice: '',
     categoryId: '',
-    material: '',
+    imageUrl: '',
+    images: [],
     dimensions: '',
+    material: '',
     color: '',
     weight: '',
     stockQuantity: '0',
-    inStock: true,
     featured: false,
-    imageUrl: '',
-    rating: '4.5',
-    reviewCount: '0'
+    inStock: true,
+    specifications: {
+      features: [],
+      warranty: '',
+      assembly: ''
+    }
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  const [newFeature, setNewFeature] = useState('');
+  const [newImage, setNewImage] = useState('');
+
+  const handleInputChange = (field: keyof ProductForm, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
+  const handleSpecificationChange = (field: keyof ProductForm['specifications'], value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: {
+        ...prev.specifications,
+        [field]: value
+      }
+    }));
+  };
+
+  const addFeature = () => {
+    if (newFeature.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        specifications: {
+          ...prev.specifications,
+          features: [...prev.specifications.features, newFeature.trim()]
+        }
+      }));
+      setNewFeature('');
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: {
+        ...prev.specifications,
+        features: prev.specifications.features.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const addImage = () => {
+    if (newImage.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, newImage.trim()]
+      }));
+      setNewImage('');
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
+      toast.error('Product name is required');
+      return false;
+    }
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      toast.error('Valid price is required');
+      return false;
+    }
+    if (!formData.categoryId) {
+      toast.error('Category is required');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setIsSubmitting(true);
+    console.log('Submitting product with data:', formData);
 
     try {
-      // Validate required fields
-      if (!formData.name || !formData.price || !formData.categoryId) {
-        toast.error('Please fill in all required fields (Name, Price, Category)');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Prepare product data with all required fields
       const productData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         price: parseFloat(formData.price),
         original_price: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
         category_id: formData.categoryId,
-        material: formData.material.trim() || null,
+        image_url: formData.imageUrl.trim() || null,
+        images: formData.images.length > 0 ? formData.images : null,
         dimensions: formData.dimensions.trim() || null,
+        material: formData.material.trim() || null,
         color: formData.color.trim() || null,
         weight: formData.weight.trim() || null,
         stock_quantity: parseInt(formData.stockQuantity) || 0,
-        in_stock: formData.inStock,
         featured: formData.featured,
-        image_url: formData.imageUrl.trim() || '/placeholder.svg',
-        rating: parseFloat(formData.rating) || 4.5,
-        review_count: parseInt(formData.reviewCount) || 0,
-        // Ensure these timestamps are included
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        in_stock: formData.inStock,
+        specifications: {
+          features: formData.specifications.features,
+          warranty: formData.specifications.warranty.trim() || null,
+          assembly: formData.specifications.assembly.trim() || null
+        },
+        rating: 0,
+        review_count: 0
       };
 
-      console.log('Submitting product data:', productData);
+      console.log('Inserting product data:', productData);
 
-      // Insert product into database
       const { data, error } = await supabase
         .from('products')
         .insert([productData])
-        .select(`
-          *,
-          categories:category_id (
-            id,
-            name,
-            description
-          )
-        `)
-        .single();
+        .select();
 
       if (error) {
-        console.error('Database error:', error);
-        throw new Error(`Database error: ${error.message}`);
-      }
-
-      if (!data) {
-        throw new Error('No data returned from database after insert');
+        console.error('Supabase error:', error);
+        throw error;
       }
 
       console.log('Product created successfully:', data);
-      toast.success(`Product "${data.name}" added successfully!`);
       
-      // Navigate back to products list
-      navigate('/admin/products');
+      // Invalidate queries to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
+      await queryClient.invalidateQueries({ queryKey: ['products', 'category'] });
+      
+      toast.success('Product added successfully!');
+      
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        originalPrice: '',
+        categoryId: '',
+        imageUrl: '',
+        images: [],
+        dimensions: '',
+        material: '',
+        color: '',
+        weight: '',
+        stockQuantity: '0',
+        featured: false,
+        inStock: true,
+        specifications: {
+          features: [],
+          warranty: '',
+          assembly: ''
+        }
+      });
       
     } catch (error: any) {
-      console.error('Error creating product:', error);
-      toast.error(error.message || 'Failed to add product. Please try again.');
+      console.error('Error adding product:', error);
+      toast.error(`Failed to add product: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (categoriesLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/admin/products')}
-          className="flex items-center"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Products
-        </Button>
-        <h1 className="text-2xl font-bold">Add New Product</h1>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Add New Product</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -212,40 +301,69 @@ const AdminAddProduct = () => {
             </CardContent>
           </Card>
 
+          {/* Images and Media */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Images and Media</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="imageUrl">Main Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+
+              <div>
+                <Label>Additional Images</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newImage}
+                    onChange={(e) => setNewImage(e.target.value)}
+                    placeholder="Enter image URL"
+                  />
+                  <Button type="button" onClick={addImage} variant="outline">
+                    Add
+                  </Button>
+                </div>
+                {formData.images.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {formData.images.map((image, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm truncate">{image}</span>
+                        <Button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          variant="ghost"
+                          size="sm"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Product Details */}
           <Card>
             <CardHeader>
               <CardTitle>Product Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="material">Material</Label>
-                <Input
-                  id="material"
-                  value={formData.material}
-                  onChange={(e) => handleInputChange('material', e.target.value)}
-                  placeholder="e.g., Solid Wood, Metal, Fabric"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="dimensions">Dimensions</Label>
-                <Input
-                  id="dimensions"
-                  value={formData.dimensions}
-                  onChange={(e) => handleInputChange('dimensions', e.target.value)}
-                  placeholder="e.g., 120cm x 60cm x 75cm"
-                />
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="color">Color</Label>
+                  <Label htmlFor="dimensions">Dimensions</Label>
                   <Input
-                    id="color"
-                    value={formData.color}
-                    onChange={(e) => handleInputChange('color', e.target.value)}
-                    placeholder="e.g., Brown, White"
+                    id="dimensions"
+                    value={formData.dimensions}
+                    onChange={(e) => handleInputChange('dimensions', e.target.value)}
+                    placeholder="L x W x H"
                   />
                 </div>
                 <div>
@@ -254,7 +372,28 @@ const AdminAddProduct = () => {
                     id="weight"
                     value={formData.weight}
                     onChange={(e) => handleInputChange('weight', e.target.value)}
-                    placeholder="e.g., 25kg"
+                    placeholder="10 kg"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="material">Material</Label>
+                  <Input
+                    id="material"
+                    value={formData.material}
+                    onChange={(e) => handleInputChange('material', e.target.value)}
+                    placeholder="Wood, Metal, etc."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="color">Color</Label>
+                  <Input
+                    id="color"
+                    value={formData.color}
+                    onChange={(e) => handleInputChange('color', e.target.value)}
+                    placeholder="Brown, White, etc."
                   />
                 </div>
               </div>
@@ -264,94 +403,95 @@ const AdminAddProduct = () => {
                 <Input
                   id="stockQuantity"
                   type="number"
+                  min="0"
                   value={formData.stockQuantity}
                   onChange={(e) => handleInputChange('stockQuantity', e.target.value)}
                   placeholder="0"
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="inStock"
-                    checked={formData.inStock}
-                    onCheckedChange={(checked) => handleInputChange('inStock', checked)}
+          {/* Specifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Specifications</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Features</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newFeature}
+                    onChange={(e) => setNewFeature(e.target.value)}
+                    placeholder="Enter a feature"
                   />
-                  <Label htmlFor="inStock">In Stock</Label>
+                  <Button type="button" onClick={addFeature} variant="outline">
+                    Add
+                  </Button>
                 </div>
+                {formData.specifications.features.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {formData.specifications.features.map((feature, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm">{feature}</span>
+                        <Button
+                          type="button"
+                          onClick={() => removeFeature(index)}
+                          variant="ghost"
+                          size="sm"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="featured"
-                    checked={formData.featured}
-                    onCheckedChange={(checked) => handleInputChange('featured', checked)}
-                  />
-                  <Label htmlFor="featured">Featured Product</Label>
-                </div>
+              <div>
+                <Label htmlFor="warranty">Warranty</Label>
+                <Input
+                  id="warranty"
+                  value={formData.specifications.warranty}
+                  onChange={(e) => handleSpecificationChange('warranty', e.target.value)}
+                  placeholder="1 year warranty"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="assembly">Assembly</Label>
+                <Input
+                  id="assembly"
+                  value={formData.specifications.assembly}
+                  onChange={(e) => handleSpecificationChange('assembly', e.target.value)}
+                  placeholder="Assembly required/included"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="featured">Featured Product</Label>
+                <Switch
+                  id="featured"
+                  checked={formData.featured}
+                  onCheckedChange={(checked) => handleInputChange('featured', checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="inStock">In Stock</Label>
+                <Switch
+                  id="inStock"
+                  checked={formData.inStock}
+                  onCheckedChange={(checked) => handleInputChange('inStock', checked)}
+                />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Image and Additional Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Image & Additional Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="imageUrl">Image URL</Label>
-              <Input
-                id="imageUrl"
-                value={formData.imageUrl}
-                onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                placeholder="https://example.com/image.jpg or leave empty for placeholder"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="rating">Rating (0-5)</Label>
-                <Input
-                  id="rating"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="5"
-                  value={formData.rating}
-                  onChange={(e) => handleInputChange('rating', e.target.value)}
-                  placeholder="0.0"
-                />
-              </div>
-              <div>
-                <Label htmlFor="reviewCount">Review Count</Label>
-                <Input
-                  id="reviewCount"
-                  type="number"
-                  value={formData.reviewCount}
-                  onChange={(e) => handleInputChange('reviewCount', e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Submit Button */}
-        <div className="flex justify-end space-x-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => navigate('/admin/products')}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
             {isSubmitting ? 'Adding Product...' : 'Add Product'}
           </Button>
         </div>
