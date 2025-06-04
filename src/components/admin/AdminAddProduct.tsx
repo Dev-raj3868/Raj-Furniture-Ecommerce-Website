@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCategories } from '@/hooks/useSupabaseData';
@@ -28,11 +28,11 @@ const AdminAddProduct = () => {
     dimensions: '',
     color: '',
     weight: '',
-    stockQuantity: '',
+    stockQuantity: '0',
     inStock: true,
     featured: false,
     imageUrl: '',
-    rating: '0',
+    rating: '4.5',
     reviewCount: '0'
   });
 
@@ -55,7 +55,7 @@ const AdminAddProduct = () => {
         return;
       }
 
-      // Prepare product data
+      // Prepare product data with all required fields
       const productData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -66,12 +66,13 @@ const AdminAddProduct = () => {
         dimensions: formData.dimensions.trim() || null,
         color: formData.color.trim() || null,
         weight: formData.weight.trim() || null,
-        stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 0,
+        stock_quantity: parseInt(formData.stockQuantity) || 0,
         in_stock: formData.inStock,
         featured: formData.featured,
         image_url: formData.imageUrl.trim() || '/placeholder.svg',
-        rating: parseFloat(formData.rating) || 0,
+        rating: parseFloat(formData.rating) || 4.5,
         review_count: parseInt(formData.reviewCount) || 0,
+        // Ensure these timestamps are included
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -82,16 +83,29 @@ const AdminAddProduct = () => {
       const { data, error } = await supabase
         .from('products')
         .insert([productData])
-        .select()
+        .select(`
+          *,
+          categories:category_id (
+            id,
+            name,
+            description
+          )
+        `)
         .single();
 
       if (error) {
         console.error('Database error:', error);
-        throw new Error(error.message);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No data returned from database after insert');
       }
 
       console.log('Product created successfully:', data);
-      toast.success('Product added successfully!');
+      toast.success(`Product "${data.name}" added successfully!`);
+      
+      // Navigate back to products list
       navigate('/admin/products');
       
     } catch (error: any) {

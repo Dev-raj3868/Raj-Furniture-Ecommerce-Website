@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Star, Truck, Shield, Headphones } from 'lucide-react';
+import { ArrowRight, Star, Truck, Shield, Headphones, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Header from '@/components/Header';
@@ -10,11 +10,16 @@ import ProductCard from '@/components/ProductCard';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import ChatBot from '@/components/ChatBot';
 import { useCategories, useProducts } from '@/hooks/useSupabaseData';
+import { useAuth } from '@/contexts/AuthContext';
 import { Product } from '@/types/product';
 
 const Index = () => {
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { data: products, isLoading: productsLoading } = useProducts();
+  const { user } = useAuth();
+
+  // Check if user is admin
+  const isAdmin = user?.email === 'admin@rajfurniture.com';
 
   // Transform Supabase product data to match ProductCard expectations
   const transformProduct = (product: any): Product => ({
@@ -41,6 +46,20 @@ const Index = () => {
     <div className="min-h-screen bg-white">
       <AnnouncementBar />
       <Header />
+      
+      {/* Admin Button - Only show for admin users */}
+      {isAdmin && (
+        <div className="bg-red-600 text-white py-2">
+          <div className="container mx-auto px-4 flex justify-center">
+            <Link to="/admin">
+              <Button variant="secondary" size="sm" className="bg-white text-red-600 hover:bg-gray-100">
+                <Settings className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
       
       {/* Hero Section */}
       <section className="relative bg-blue-600 text-white py-20 overflow-hidden">
