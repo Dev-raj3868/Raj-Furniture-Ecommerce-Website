@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
+          // Clear admin session when user logs out
+          localStorage.removeItem('isAdminLoggedIn');
+          localStorage.removeItem('adminSession');
         }
       }
     );
@@ -140,9 +144,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear any local state
+      // Clear any local state including admin session
       setSession(null);
       setUser(null);
+      localStorage.removeItem('isAdminLoggedIn');
+      localStorage.removeItem('adminSession');
       
       toast.success('Logged out successfully!');
     } catch (error: any) {
