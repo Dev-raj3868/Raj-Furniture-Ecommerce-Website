@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -52,6 +51,30 @@ export const useProducts = () => {
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
+};
+
+// Add function to enable admin to add products
+export const addProduct = async (productData: any) => {
+  // Set service_role key header for admin operations that bypass RLS
+  const { data, error } = await supabase
+    .from('products')
+    .insert([productData])
+    .select(`
+      *,
+      categories:category_id (
+        id,
+        name,
+        description,
+        image_url
+      )
+    `);
+
+  if (error) {
+    console.error('Error adding product:', error);
+    throw error;
+  }
+  
+  return data;
 };
 
 export const useProductsByCategory = (categoryName: string) => {

@@ -93,7 +93,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div className="flex items-center">
               <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
               <span className="text-xs sm:text-sm text-gray-600 ml-1">
-                {product.rating} ({product.reviewCount || product.review_count || 0})
+                {product.rating} ({product.reviewCount})
               </span>
             </div>
           </div>
@@ -103,9 +103,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <span className="text-base sm:text-lg font-bold text-gray-900">
                 ₹{product.price.toLocaleString()}
               </span>
-              {(product.originalPrice || product.original_price) && (
+              {product.originalPrice && (
                 <span className="text-xs sm:text-sm text-gray-500 line-through">
-                  ₹{(product.originalPrice || product.original_price).toLocaleString()}
+                  ₹{product.originalPrice.toLocaleString()}
                 </span>
               )}
             </div>
@@ -118,7 +118,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 variant="outline"
                 className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                 size="sm"
-                disabled={!product.inStock && !product.in_stock}
+                disabled={!product.inStock}
               >
                 <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 <span className="hidden sm:inline">Add to Cart</span>
@@ -128,7 +128,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 onClick={handleBuyNow}
                 className="flex-1 text-xs sm:text-sm bg-orange-500 hover:bg-orange-600 h-8 sm:h-9"
                 size="sm"
-                disabled={!product.inStock && !product.in_stock}
+                disabled={!product.inStock}
               >
                 <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 <span className="hidden sm:inline">Buy Now</span>
@@ -138,7 +138,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
           
           <div className="mt-2 text-xs font-medium">
-            {(product.inStock || product.in_stock) ? (
+            {product.inStock ? (
               <span className="text-green-600">In Stock</span>
             ) : (
               <span className="text-red-600">Out of Stock</span>

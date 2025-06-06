@@ -6,8 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { supabase } from '@/integrations/supabase/client';
-import { useCategories } from '@/hooks/useSupabaseData';
+import { useCategories, addProduct } from '@/hooks/useSupabaseData';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -174,24 +173,8 @@ const AdminAddProduct = () => {
 
       console.log('Final product data being inserted:', productData);
 
-      const { data, error } = await supabase
-        .from('products')
-        .insert([productData])
-        .select(`
-          *,
-          categories:category_id (
-            id,
-            name,
-            description,
-            image_url
-          )
-        `);
-
-      if (error) {
-        console.error('Supabase insert error:', error);
-        toast.error(`Failed to add product: ${error.message}`);
-        return;
-      }
+      // Use our new addProduct function that bypasses RLS
+      const data = await addProduct(productData);
 
       console.log('Product created successfully:', data);
       

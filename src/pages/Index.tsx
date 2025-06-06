@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Settings } from 'lucide-react';
@@ -25,16 +26,27 @@ const Index = () => {
 
   // Transform Supabase product data to match ProductCard expectations
   const transformProduct = (product: any): Product => ({
-    ...product,
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    originalPrice: product.original_price,
+    image_url: product.image_url,
+    description: product.description,
+    category_id: product.category_id,
+    featured: product.featured,
+    in_stock: product.in_stock,
+    material: product.material,
+    dimensions: product.dimensions,
+    color: product.color,
+    images: product.images || [],
+    created_at: product.created_at,
+    categories: product.categories,
     rating: product.rating || 4.5,
     reviewCount: product.review_count || 0,
     features: product.specifications?.features || [],
     category: product.categories?.name || '',
     subCategory: '',
     inStock: product.in_stock,
-    featured: product.featured || false,
-    // Ensure image compatibility
-    originalPrice: product.original_price,
     discount: product.original_price && product.original_price > product.price 
       ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
       : undefined
