@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Settings } from 'lucide-react';
@@ -33,7 +32,12 @@ const Index = () => {
     category: product.categories?.name || '',
     subCategory: '',
     inStock: product.in_stock,
-    featured: product.featured || false
+    featured: product.featured || false,
+    // Ensure image compatibility
+    originalPrice: product.original_price,
+    discount: product.original_price && product.original_price > product.price 
+      ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+      : undefined
   });
 
   const featuredProducts = products?.filter(product => product.featured).slice(0, 8).map(transformProduct) || [];

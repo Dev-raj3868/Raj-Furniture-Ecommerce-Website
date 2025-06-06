@@ -23,7 +23,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url || (product.images && product.images[0]) || '/placeholder.svg'
+      image: getProductImage(product)
     });
     toast.success('Added to cart!');
   };
@@ -34,7 +34,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     navigate(`/product/${product.id}`);
   };
 
-  const productImage = product.image_url || (product.images && product.images[0]) || '/placeholder.svg';
+  // Helper function to get the correct product image
+  const getProductImage = (product: any) => {
+    // Try image_url first
+    if (product.image_url) {
+      return product.image_url;
+    }
+    
+    // Try images array
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      return product.images[0];
+    }
+    
+    // Fallback to placeholder
+    return '/placeholder.svg';
+  };
+
+  const productImage = getProductImage(product);
+  
+  // Calculate discount percentage if original price exists
+  const discountPercentage = product.originalPrice && product.originalPrice > product.price 
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : null;
 
   return (
     <Link to={`/product/${product.id}`}>
@@ -44,10 +65,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             src={productImage}
             alt={product.name}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              console.log('Image failed to load:', productImage);
+              (e.target as HTMLImageElement).src = '/placeholder.svg';
+            }}
           />
-          {product.discount && (
+          {(discountPercentage || product.discount) && (
             <Badge className="absolute top-2 left-2 bg-red-500 text-white text-xs">
-              {product.discount}% OFF
+              {discountPercentage || product.discount}% OFF
             </Badge>
           )}
           <Button
@@ -68,7 +93,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div className="flex items-center">
               <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
               <span className="text-xs sm:text-sm text-gray-600 ml-1">
-                {product.rating} ({product.reviewCount})
+                {product.rating} ({product.reviewCount || product.review_count || 0})
               </span>
             </div>
           </div>
@@ -78,9 +103,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <span className="text-base sm:text-lg font-bold text-gray-900">
                 ₹{product.price.toLocaleString()}
               </span>
-              {product.originalPrice && (
+              {(product.originalPrice || product.original_price) && (
                 <span className="text-xs sm:text-sm text-gray-500 line-through">
-                  ₹{product.originalPrice.toLocaleString()}
+                  ₹{(product.originalPrice || product.original_price).toLocaleString()}
                 </span>
               )}
             </div>
@@ -93,6 +118,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 variant="outline"
                 className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                 size="sm"
+                disabled={!product.inStock && !product.in_stock}
               >
                 <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 <span className="hidden sm:inline">Add to Cart</span>
@@ -102,6 +128,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 onClick={handleBuyNow}
                 className="flex-1 text-xs sm:text-sm bg-orange-500 hover:bg-orange-600 h-8 sm:h-9"
                 size="sm"
+                disabled={!product.inStock && !product.in_stock}
               >
                 <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 <span className="hidden sm:inline">Buy Now</span>
@@ -110,8 +137,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           </div>
           
-          <div className="mt-2 text-xs text-green-600 font-medium">
-            {product.inStock ? 'In Stock' : 'Out of Stock'}
+          <div className="mt-2 text-xs font-medium">
+            {(product.inStock || product.in_stock) ? (
+              <span className="text-green-600">In Stock</span>
+            ) : (
+              <span className="text-red-600">Out of Stock</span>
+            )}
           </div>
         </div>
       </div>

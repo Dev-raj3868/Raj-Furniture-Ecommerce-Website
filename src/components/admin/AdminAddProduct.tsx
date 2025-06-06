@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -146,6 +145,7 @@ const AdminAddProduct = () => {
     console.log('Submitting product with data:', formData);
 
     try {
+      // Prepare the product data with correct field mapping
       const productData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -161,32 +161,46 @@ const AdminAddProduct = () => {
         stock_quantity: parseInt(formData.stockQuantity) || 0,
         featured: formData.featured,
         in_stock: formData.inStock,
-        specifications: {
+        specifications: formData.specifications.features.length > 0 || 
+                       formData.specifications.warranty.trim() || 
+                       formData.specifications.assembly.trim() ? {
           features: formData.specifications.features,
           warranty: formData.specifications.warranty.trim() || null,
           assembly: formData.specifications.assembly.trim() || null
-        },
-        rating: 0,
-        review_count: 0
+        } : null,
+        rating: 4.5, // Default rating
+        review_count: 0 // Default review count
       };
 
-      console.log('Inserting product data:', productData);
+      console.log('Final product data being inserted:', productData);
 
       const { data, error } = await supabase
         .from('products')
         .insert([productData])
-        .select();
+        .select(`
+          *,
+          categories:category_id (
+            id,
+            name,
+            description,
+            image_url
+          )
+        `);
 
       if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+        console.error('Supabase insert error:', error);
+        toast.error(`Failed to add product: ${error.message}`);
+        return;
       }
 
       console.log('Product created successfully:', data);
       
-      // Invalidate queries to refresh the data
-      await queryClient.invalidateQueries({ queryKey: ['products'] });
-      await queryClient.invalidateQueries({ queryKey: ['products', 'category'] });
+      // Invalidate and refetch queries to update the UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+        queryClient.invalidateQueries({ queryKey: ['products', 'category'] }),
+        queryClient.refetchQueries({ queryKey: ['products'] })
+      ]);
       
       toast.success('Product added successfully!');
       
@@ -264,6 +278,7 @@ const AdminAddProduct = () => {
                     id="price"
                     type="number"
                     step="0.01"
+                    min="0"
                     value={formData.price}
                     onChange={(e) => handleInputChange('price', e.target.value)}
                     placeholder="0.00"
@@ -276,6 +291,7 @@ const AdminAddProduct = () => {
                     id="originalPrice"
                     type="number"
                     step="0.01"
+                    min="0"
                     value={formData.originalPrice}
                     onChange={(e) => handleInputChange('originalPrice', e.target.value)}
                     placeholder="0.00"
@@ -308,13 +324,14 @@ const AdminAddProduct = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="imageUrl">Main Image URL</Label>
+                <Label htmlFor="imageUrl">Main Image URL *</Label>
                 <Input
                   id="imageUrl"
                   value={formData.imageUrl}
                   onChange={(e) => handleInputChange('imageUrl', e.target.value)}
                   placeholder="https://example.com/image.jpg"
                 />
+                <p className="text-xs text-gray-500 mt-1">This will be the primary product image</p>
               </div>
 
               <div>
@@ -491,7 +508,11 @@ const AdminAddProduct = () => {
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             {isSubmitting ? 'Adding Product...' : 'Add Product'}
           </Button>
         </div>
