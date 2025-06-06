@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -53,44 +54,31 @@ export const useProducts = () => {
   });
 };
 
-// Updated function to handle RLS properly for admin product addition
+// Add function to enable admin to add products
 export const addProduct = async (productData: any) => {
   console.log('Adding product with data:', productData);
   
-  try {
-    // Use the service role for admin operations
-    const { data, error } = await supabase
-      .from('products')
-      .insert([{
-        ...productData,
-        // Ensure all required fields are present
-        rating: productData.rating || 4.5,
-        review_count: productData.review_count || 0,
-        in_stock: productData.in_stock !== undefined ? productData.in_stock : true,
-        featured: productData.featured || false,
-        stock_quantity: productData.stock_quantity || 0
-      }])
-      .select(`
-        *,
-        categories:category_id (
-          id,
-          name,
-          description,
-          image_url
-        )
-      `);
+  // We're using a direct insert since we now have RLS policies in place
+  const { data, error } = await supabase
+    .from('products')
+    .insert([productData])
+    .select(`
+      *,
+      categories:category_id (
+        id,
+        name,
+        description,
+        image_url
+      )
+    `);
 
-    if (error) {
-      console.error('Error adding product:', error);
-      throw new Error(`Failed to add product: ${error.message}`);
-    }
-    
-    console.log('Product added successfully:', data);
-    return data;
-  } catch (err) {
-    console.error('Unexpected error:', err);
-    throw err;
+  if (error) {
+    console.error('Error adding product:', error);
+    throw error;
   }
+  
+  console.log('Product added successfully:', data);
+  return data;
 };
 
 export const useProductsByCategory = (categoryName: string) => {

@@ -24,57 +24,33 @@ const Index = () => {
   // Check if user is admin
   const isAdmin = user?.email === 'admin@rajfurniture.com';
 
-  // Enhanced product transformation with better image handling
-  const transformProduct = (product: any): Product => {
-    // Ensure we have a valid image
-    let productImageUrl = '/placeholder.svg';
-    
-    if (product.image_url && product.image_url.trim() !== '') {
-      productImageUrl = product.image_url;
-    } else if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-      const firstImage = product.images[0];
-      if (firstImage && firstImage.trim() !== '') {
-        productImageUrl = firstImage;
-      }
-    } else {
-      // Use furniture-specific images from Unsplash based on category or random
-      const furnitureImages = [
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1571898670072-6f8a681b5d8e?w=400&h=300&fit=crop'
-      ];
-      productImageUrl = furnitureImages[Math.floor(Math.random() * furnitureImages.length)];
-    }
-
-    return {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.original_price,
-      image_url: productImageUrl,
-      description: product.description,
-      category_id: product.category_id,
-      featured: product.featured,
-      in_stock: product.in_stock,
-      material: product.material,
-      dimensions: product.dimensions,
-      color: product.color,
-      images: product.images || [productImageUrl],
-      created_at: product.created_at,
-      categories: product.categories,
-      rating: product.rating || 4.5,
-      reviewCount: product.review_count || Math.floor(Math.random() * 50) + 10, // Random review count if not set
-      features: product.specifications?.features || [],
-      category: product.categories?.name || '',
-      subCategory: '',
-      inStock: product.in_stock,
-      discount: product.original_price && product.original_price > product.price 
-        ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
-        : undefined
-    };
-  };
+  // Transform Supabase product data to match ProductCard expectations
+  const transformProduct = (product: any): Product => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    originalPrice: product.original_price,
+    image_url: product.image_url || (product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg'),
+    description: product.description,
+    category_id: product.category_id,
+    featured: product.featured,
+    in_stock: product.in_stock,
+    material: product.material,
+    dimensions: product.dimensions,
+    color: product.color,
+    images: product.images || [],
+    created_at: product.created_at,
+    categories: product.categories,
+    rating: product.rating || 4.5,
+    reviewCount: product.review_count || 0,
+    features: product.specifications?.features || [],
+    category: product.categories?.name || '',
+    subCategory: '',
+    inStock: product.in_stock,
+    discount: product.original_price && product.original_price > product.price 
+      ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+      : undefined
+  });
 
   const featuredProducts = products?.filter(product => product.featured).slice(0, 8).map(transformProduct) || [];
 
@@ -92,10 +68,10 @@ const Index = () => {
       
       {/* Admin Button - Only show for admin users */}
       {isAdmin && (
-        <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 shadow-lg">
+        <div className="bg-red-600 text-white py-2">
           <div className="container mx-auto px-4 flex justify-center">
             <Link to="/admin">
-              <Button variant="secondary" size="sm" className="bg-white text-red-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+              <Button variant="secondary" size="sm" className="bg-white text-red-600 hover:bg-gray-100">
                 <Settings className="w-4 h-4 mr-2" />
                 Admin Panel
               </Button>
