@@ -30,7 +30,7 @@ const Index = () => {
     name: product.name,
     price: product.price,
     originalPrice: product.original_price,
-    image_url: product.image_url,
+    image_url: product.image_url || (product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg'),
     description: product.description,
     category_id: product.category_id,
     featured: product.featured,

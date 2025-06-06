@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -55,7 +56,9 @@ export const useProducts = () => {
 
 // Add function to enable admin to add products
 export const addProduct = async (productData: any) => {
-  // Set service_role key header for admin operations that bypass RLS
+  console.log('Adding product with data:', productData);
+  
+  // We're using a direct insert since we now have RLS policies in place
   const { data, error } = await supabase
     .from('products')
     .insert([productData])
@@ -74,6 +77,7 @@ export const addProduct = async (productData: any) => {
     throw error;
   }
   
+  console.log('Product added successfully:', data);
   return data;
 };
 

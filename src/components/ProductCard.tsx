@@ -35,7 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   // Helper function to get the correct product image
-  const getProductImage = (product: any) => {
+  const getProductImage = (product: Product): string => {
     // Try image_url first
     if (product.image_url) {
       return product.image_url;
