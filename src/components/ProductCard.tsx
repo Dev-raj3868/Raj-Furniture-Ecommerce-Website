@@ -34,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     navigate(`/product/${product.id}`);
   };
 
-  // Helper function to get furniture-specific product images
+  // Helper function to get colorful furniture-specific product images
   const getProductImage = (product: Product): string => {
     // Try image_url first
     if (product.image_url) {
@@ -46,28 +46,43 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       return product.images[0];
     }
     
-    // Furniture-specific fallback images based on product name/category
+    // Colorful furniture-specific fallback images based on product name/category
     const productName = product.name?.toLowerCase() || '';
     const categoryName = product.category?.toLowerCase() || '';
     
     if (productName.includes('sofa') || productName.includes('couch') || categoryName.includes('sofa')) {
-      return 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=300&fit=crop';
+      return 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80';
     }
     if (productName.includes('chair') || categoryName.includes('chair')) {
-      return 'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=300&fit=crop';
+      return 'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=500&h=400&fit=crop&auto=format&q=80';
     }
     if (productName.includes('table') || categoryName.includes('table')) {
-      return 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop';
+      return 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=500&h=400&fit=crop&auto=format&q=80';
     }
     if (productName.includes('bed') || categoryName.includes('bed')) {
-      return 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=300&fit=crop';
+      return 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=500&h=400&fit=crop&auto=format&q=80';
     }
     if (productName.includes('cabinet') || productName.includes('wardrobe') || categoryName.includes('storage')) {
-      return 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop';
+      return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop&auto=format&q=80';
+    }
+    if (productName.includes('dresser') || productName.includes('drawer')) {
+      return 'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=500&h=400&fit=crop&auto=format&q=80';
+    }
+    if (productName.includes('bookshelf') || productName.includes('shelf')) {
+      return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=400&fit=crop&auto=format&q=80';
+    }
+    if (productName.includes('lamp') || productName.includes('light')) {
+      return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=400&fit=crop&auto=format&q=80';
+    }
+    if (productName.includes('mirror')) {
+      return 'https://images.unsplash.com/photo-1618220179428-22790b461013?w=500&h=400&fit=crop&auto=format&q=80';
+    }
+    if (productName.includes('desk') || productName.includes('office')) {
+      return 'https://images.unsplash.com/photo-1541558869434-2840d308329a?w=500&h=400&fit=crop&auto=format&q=80';
     }
     
-    // Default furniture image
-    return 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop';
+    // Default colorful furniture image
+    return 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80';
   };
 
   const productImage = getProductImage(product);
@@ -87,7 +102,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
             onError={(e) => {
               console.log('Image failed to load:', productImage);
-              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop';
+              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80';
             }}
           />
           {(discountPercentage || product.discount) && (
