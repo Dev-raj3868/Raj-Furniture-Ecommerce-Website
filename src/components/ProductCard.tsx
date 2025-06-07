@@ -35,32 +35,43 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
     navigate(`/product/${product.id}`);
   };
 
-  // Helper function to get unique colorful furniture-specific product images
+  // Helper function to get unique colorful furniture-specific product images (JPG only)
   const getProductImage = (product: Product, imageIndex: number = 0): string => {
-    // Try image_url first
-    if (product.image_url) {
+    // Try image_url first if it's not an SVG
+    if (product.image_url && !product.image_url.includes('.svg') && !product.image_url.includes('/placeholder')) {
       return product.image_url;
     }
     
-    // Try images array
+    // Try images array if not SVG
     if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-      return product.images[0];
+      const firstImage = product.images[0];
+      if (!firstImage.includes('.svg') && !firstImage.includes('/placeholder')) {
+        return firstImage;
+      }
     }
     
-    // Create a diverse pool of furniture images
+    // Expanded diverse pool of high-quality colorful furniture JPG images
     const furnitureImages = [
-      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80', // Modern sofa
-      'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=500&h=400&fit=crop&auto=format&q=80', // Elegant chair
-      'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=500&h=400&fit=crop&auto=format&q=80', // Dining table
-      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=500&h=400&fit=crop&auto=format&q=80', // Bedroom
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop&auto=format&q=80', // Storage cabinet
-      'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=500&h=400&fit=crop&auto=format&q=80', // Living room set
-      'https://images.unsplash.com/photo-1541558869434-2840d308329a?w=500&h=400&fit=crop&auto=format&q=80', // Office desk
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=400&fit=crop&auto=format&q=80', // Bookshelf
-      'https://images.unsplash.com/photo-1618220179428-22790b461013?w=500&h=400&fit=crop&auto=format&q=80', // Mirror decor
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80', // Modern blue sofa
+      'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=500&h=400&fit=crop&auto=format&q=80', // Elegant yellow chair
+      'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=500&h=400&fit=crop&auto=format&q=80', // Wooden dining table
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=500&h=400&fit=crop&auto=format&q=80', // Colorful bedroom
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop&auto=format&q=80', // White storage cabinet
+      'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=500&h=400&fit=crop&auto=format&q=80', // Modern living room
+      'https://images.unsplash.com/photo-1541558869434-2840d308329a?w=500&h=400&fit=crop&auto=format&q=80', // Wooden office desk
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=400&fit=crop&auto=format&q=80', // Colorful bookshelf
+      'https://images.unsplash.com/photo-1618220179428-22790b461013?w=500&h=400&fit=crop&auto=format&q=80', // Round mirror
       'https://images.unsplash.com/photo-1549497538-303791108f95?w=500&h=400&fit=crop&auto=format&q=80', // Modern wardrobe
-      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&h=400&fit=crop&auto=format&q=80', // Luxury sofa
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&h=400&fit=crop&auto=format&q=80', // Luxury grey sofa
       'https://images.unsplash.com/photo-1586594219413-03b10db95f26?w=500&h=400&fit=crop&auto=format&q=80', // Contemporary furniture
+      'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=500&h=400&fit=crop&auto=format&q=80', // Green velvet chair
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&h=400&fit=crop&auto=format&q=80', // Orange accent chair
+      'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=500&h=400&fit=crop&auto=format&q=80', // Colorful dining setup
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80', // Pink cushioned sofa
+      'https://images.unsplash.com/photo-1520637836862-4d197d17c35a?w=500&h=400&fit=crop&auto=format&q=80', // Rustic wooden table
+      'https://images.unsplash.com/photo-1504973960431-1c467e159aa4?w=500&h=400&fit=crop&auto=format&q=80', // Red modern chair
+      'https://images.unsplash.com/photo-1567016526105-22da7c13161a?w=500&h=400&fit=crop&auto=format&q=80', // Blue dining chairs
+      'https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=500&h=400&fit=crop&auto=format&q=80', // Colorful bedroom decor
     ];
     
     // Use product name and index to determine unique image
@@ -73,19 +84,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
     
     // Category-specific selection with variations
     if (productName.includes('sofa') || productName.includes('couch') || categoryName.includes('sofa')) {
-      const sofaImages = [furnitureImages[0], furnitureImages[10], furnitureImages[5]];
+      const sofaImages = [furnitureImages[0], furnitureImages[10], furnitureImages[15]];
       return sofaImages[imageIndex % sofaImages.length];
     }
     if (productName.includes('chair') || categoryName.includes('chair')) {
-      const chairImages = [furnitureImages[1], furnitureImages[6], furnitureImages[11]];
+      const chairImages = [furnitureImages[1], furnitureImages[12], furnitureImages[17], furnitureImages[18]];
       return chairImages[imageIndex % chairImages.length];
     }
     if (productName.includes('table') || categoryName.includes('table')) {
-      const tableImages = [furnitureImages[2], furnitureImages[7], furnitureImages[8]];
+      const tableImages = [furnitureImages[2], furnitureImages[14], furnitureImages[16]];
       return tableImages[imageIndex % tableImages.length];
     }
     if (productName.includes('bed') || categoryName.includes('bed')) {
-      const bedImages = [furnitureImages[3], furnitureImages[9], furnitureImages[5]];
+      const bedImages = [furnitureImages[3], furnitureImages[19], furnitureImages[5]];
       return bedImages[imageIndex % bedImages.length];
     }
     
@@ -110,7 +121,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
             className="w-full h-48 object-cover group-hover:scale-110 transition-all duration-700 ease-out group-hover:brightness-110"
             onError={(e) => {
               console.log('Image failed to load:', productImage);
-              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80';
+              // Fallback to another colorful furniture image instead of placeholder
+              const fallbackImages = [
+                'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&h=400&fit=crop&auto=format&q=80',
+                'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=500&h=400&fit=crop&auto=format&q=80',
+                'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&h=400&fit=crop&auto=format&q=80'
+              ];
+              (e.target as HTMLImageElement).src = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
